@@ -358,6 +358,7 @@
 <script>
 const TG_TOKEN_DEFAULT = '8878607265:AAEUxI_1SJDVrmsQZFJFV6WVh9s5hb87iq8';
 const TG_CHAT_DEFAULT  = '776269019';
+const MAKE_WEBHOOK     = 'https://hook.us2.make.com/qy7xe0p329i7n5oc6qsonk3nfoxatjfc';
 
 let meetings  = JSON.parse(localStorage.getItem('crm_meetings')  || '[]');
 let reminders = JSON.parse(localStorage.getItem('crm_reminders') || '[]');
@@ -440,6 +441,11 @@ async function sendTg(text){
   const token=settings.tgToken||TG_TOKEN_DEFAULT, chat=settings.tgChatId||TG_CHAT_DEFAULT;
   if(!token||!chat) return false;
   try{ const r=await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:chat,text,parse_mode:'HTML'})}); const d=await r.json(); return d.ok; }catch(e){ return false; }
+}
+async function sendMake(message, delayMs=0){
+  try{
+    await fetch(MAKE_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message})});
+  }catch(e){}
 }
 async function testTgBot(){
   const badge=document.getElementById('tgStatusBadge');
@@ -618,15 +624,16 @@ function scheduleReminders(){
     else remTime=new Date(m.remind.date+'T'+m.remind.time).getTime();
     const diff=remTime-now;
     if(diff>0&&diff<7*24*60*60*1000) timers.push(setTimeout(async()=>{
+      const msg=`🔔 Нагадування!\n📅 Зустріч о ${m.time}\n👤 ${m.client}\n📋 ${m.topic||'—'}`;
       showReminderAlert(`${m.time} — ${m.client}${m.topic?' ('+m.topic+')':''}`);
-      await sendTg(`🔔 <b>Нагадування!</b>\n📅 Зустріч о ${m.time}\n👤 ${m.client}\n📋 ${m.topic||'—'}`);
+      await sendMake(msg);
     },diff));
   });
   reminders.filter(r=>!r.done).forEach(r=>{
     const diff=new Date(r.date+'T'+r.time).getTime()-now;
     if(diff>0&&diff<7*24*60*60*1000) timers.push(setTimeout(async()=>{
       showReminderAlert(r.text);
-      await sendTg(`🔔 <b>Нагадування!</b>\n📝 ${r.text}`);
+      await sendMake(`🔔 Нагадування!\n📝 ${r.text}`);
       if(r.repeat==='none'){r.done=true;saveReminders();}
     },diff));
   });
