@@ -9,45 +9,29 @@
 <title>КонтентКРЕО — CRM</title>
 <style>
   :root {
-    --gold: #CFB050;
-    --gold-light: #E8D080;
-    --gold-dim: #8a7535;
-    --bg: #0D0D0D;
-    --surface: #1A1A1A;
-    --surface2: #242424;
-    --surface3: #2E2E2E;
-    --text: #F0EDE6;
-    --text-dim: #888;
-    --text-muted: #555;
-    --red: #E05555;
-    --green: #4CAF50;
-    --orange: #E07B30;
-    --blue: #4A90D9;
-    --purple: #9B59B6;
-    --radius: 14px;
-    --radius-sm: 8px;
+    --gold: #CFB050; --gold-light: #E8D080; --gold-dim: #8a7535;
+    --bg: #0D0D0D; --surface: #1A1A1A; --surface2: #242424; --surface3: #2E2E2E;
+    --text: #F0EDE6; --text-dim: #888; --text-muted: #555;
+    --red: #E05555; --green: #4CAF50; --orange: #E07B30; --blue: #4A90D9; --purple: #9B59B6;
+    --radius: 14px; --radius-sm: 8px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; min-height: 100vh; overflow-x: hidden; }
 
-  /* NAV */
   .nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid #2a2a2a; display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
   .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; gap: 3px; font-size: 10px; color: var(--text-muted); cursor: pointer; transition: color .2s; border: none; background: none; }
   .nav-btn.active { color: var(--gold); }
   .nav-btn svg { width: 22px; height: 22px; }
 
-  /* SCREENS */
   .screen { display: none; padding: 16px 16px 90px; min-height: 100vh; }
   .screen.active { display: block; }
 
-  /* HEADER */
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-top: 8px; }
   .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
   .header h1 span { color: var(--gold); }
   .btn-gold { background: var(--gold); color: #000; border: none; border-radius: var(--radius-sm); padding: 8px 16px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
   .btn-gold:active { opacity: .8; }
 
-  /* CALENDAR */
   .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .cal-nav button { background: var(--surface2); border: none; color: var(--gold); width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .cal-month { font-size: 17px; font-weight: 700; }
@@ -60,27 +44,26 @@
   .cal-day.other-month { color: var(--text-muted); }
   .cal-dot { position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; }
 
-  /* DAY MEETINGS */
   .day-label { font-size: 15px; font-weight: 600; color: var(--text-dim); margin: 20px 0 12px; }
   .meeting-card { background: var(--surface); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 4px solid transparent; transition: opacity .2s; }
   .meeting-card.done { opacity: .5; }
   .meeting-card.done .mc-name { text-decoration: line-through; }
-  .mc-color { width: 4px; align-self: stretch; border-radius: 2px; display: none; }
   .mc-time { font-size: 13px; color: var(--gold); font-weight: 700; min-width: 42px; }
   .mc-info { flex: 1; }
   .mc-name { font-size: 15px; font-weight: 600; }
   .mc-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
-  .mc-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .mc-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
   .badge-hot { background: rgba(224,85,85,.2); color: var(--red); }
   .badge-warm { background: rgba(224,123,48,.2); color: var(--orange); }
   .badge-cool { background: rgba(74,144,217,.2); color: var(--blue); }
+  .badge-done { background: rgba(76,175,80,.2); color: var(--green); }
+  .badge-vip { background: rgba(155,89,182,.2); color: var(--purple); }
   .mc-done-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--surface3); background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); font-size: 14px; transition: all .2s; flex-shrink: 0; }
   .mc-done-btn.done { background: var(--green); border-color: var(--green); color: #fff; }
 
-  /* FORM MODAL */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; align-items: flex-end; }
   .modal-overlay.open { display: flex; }
-  .modal { background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); width: 100%; max-height: 90vh; overflow-y: auto; }
+  .modal { background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); width: 100%; max-height: 92vh; overflow-y: auto; }
   .modal-handle { width: 36px; height: 4px; background: var(--surface3); border-radius: 2px; margin: 0 auto 20px; }
   .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
   .form-group { margin-bottom: 16px; }
@@ -90,19 +73,34 @@
   .color-picker { display: flex; gap: 10px; flex-wrap: wrap; }
   .color-opt { width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: border .15s; }
   .color-opt.selected { border-color: #fff; }
-  .remind-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .remind-chip { background: var(--surface2); border: 1.5px solid var(--surface3); border-radius: 20px; padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--text-dim); transition: all .2s; }
-  .remind-chip.selected { background: rgba(207,176,80,.15); border-color: var(--gold); color: var(--gold); }
+
+  /* REMIND SECTION */
+  .remind-section { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; }
+  .remind-row-inline { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .remind-label { font-size: 13px; color: var(--text-dim); min-width: 60px; }
+  .remind-input-sm { background: var(--surface3); border: 1.5px solid #444; border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 14px; outline: none; width: 70px; text-align: center; -webkit-appearance: none; }
+  .remind-input-sm:focus { border-color: var(--gold); }
+  .remind-unit-tabs { display: flex; gap: 4px; }
+  .remind-unit { background: var(--surface3); border: 1.5px solid #444; border-radius: 6px; padding: 6px 10px; color: var(--text-dim); font-size: 13px; cursor: pointer; transition: all .2s; }
+  .remind-unit.selected { background: rgba(207,176,80,.15); border-color: var(--gold); color: var(--gold); }
+  .remind-datetime-row { display: flex; gap: 8px; align-items: center; }
+  .remind-type-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
+  .rtt-btn { flex: 1; text-align: center; padding: 8px; border-radius: var(--radius-sm); background: var(--surface3); border: 1.5px solid #444; color: var(--text-dim); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .rtt-btn.active { background: rgba(207,176,80,.15); border-color: var(--gold); color: var(--gold); }
+  .remind-block { display: none; }
+  .remind-block.active { display: block; }
+  .tg-note { font-size: 11px; color: var(--text-muted); margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+  .tg-note.ok { color: var(--green); }
+
   .form-actions { display: flex; gap: 10px; margin-top: 24px; }
   .btn-cancel { flex: 1; background: var(--surface2); border: none; border-radius: var(--radius-sm); padding: 14px; color: var(--text-dim); font-size: 15px; font-weight: 600; cursor: pointer; }
   .btn-save { flex: 2; background: var(--gold); border: none; border-radius: var(--radius-sm); padding: 14px; color: #000; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .btn-delete { background: rgba(224,85,85,.15); border: 1.5px solid var(--red); border-radius: var(--radius-sm); padding: 14px; color: var(--red); font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; width: 100%; }
 
-  /* ANALYTICS */
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
   .stat-card { background: var(--surface); border-radius: var(--radius); padding: 16px; }
   .stat-val { font-size: 28px; font-weight: 800; color: var(--gold); }
   .stat-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
-  .stat-card.wide { grid-column: 1/-1; }
   .period-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
   .period-tab { flex: 1; text-align: center; padding: 8px; border-radius: var(--radius-sm); background: var(--surface2); border: none; color: var(--text-dim); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
   .period-tab.active { background: rgba(207,176,80,.15); color: var(--gold); border: 1.5px solid var(--gold); }
@@ -110,42 +108,52 @@
   .bar-chart h3 { font-size: 14px; color: var(--text-dim); margin-bottom: 16px; font-weight: 600; }
   .bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
   .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-  .bar-fill { width: 100%; border-radius: 4px 4px 0 0; background: var(--gold); min-height: 4px; transition: height .4s; }
+  .bar-fill { width: 100%; border-radius: 4px 4px 0 0; background: var(--gold); min-height: 4px; }
   .bar-lbl { font-size: 10px; color: var(--text-muted); }
   .bar-val { font-size: 10px; color: var(--gold); font-weight: 700; }
 
-  /* CLIENTS */
-  .client-card { background: var(--surface); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .client-card { background: var(--surface); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
   .client-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: #000; flex-shrink: 0; }
   .client-info { flex: 1; }
   .client-name { font-size: 15px; font-weight: 600; }
   .client-meta { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
   .client-count { font-size: 12px; color: var(--gold); font-weight: 700; }
 
-  /* SETTINGS */
   .settings-section { margin-bottom: 24px; }
   .settings-title { font-size: 12px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
   .settings-row { background: var(--surface); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
   .settings-row-label { font-size: 15px; }
-  .toggle { width: 48px; height: 28px; background: var(--surface3); border-radius: 14px; position: relative; cursor: pointer; transition: background .3s; border: none; }
+  .toggle { width: 48px; height: 28px; background: var(--surface3); border-radius: 14px; position: relative; cursor: pointer; transition: background .3s; border: none; flex-shrink: 0; }
   .toggle.on { background: var(--gold); }
   .toggle::after { content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; background:#fff; border-radius:50%; transition: transform .3s; }
   .toggle.on::after { transform: translateX(20px); }
+
+  .tg-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 20px; margin-top: 8px; }
+  .tg-status.ok { background: rgba(76,175,80,.15); color: var(--green); }
+  .tg-status.err { background: rgba(224,85,85,.15); color: var(--red); }
+
   .empty { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
   .empty-icon { font-size: 40px; margin-bottom: 12px; }
 
-  /* REMINDER ALERT */
   .reminder-alert { display: none; position: fixed; top: 16px; left: 16px; right: 16px; background: var(--surface); border: 1.5px solid var(--gold); border-radius: var(--radius); padding: 16px; z-index: 300; box-shadow: 0 8px 32px rgba(0,0,0,.6); }
   .reminder-alert.show { display: block; animation: slideDown .3s ease; }
   @keyframes slideDown { from { transform: translateY(-20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
   .ra-title { font-size: 13px; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
   .ra-text { font-size: 15px; font-weight: 600; }
   .ra-close { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; }
+
+  /* REMINDERS SCREEN */
+  .remind-card { background: var(--surface); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+  .rc-icon { font-size: 24px; flex-shrink: 0; }
+  .rc-info { flex: 1; }
+  .rc-time { font-size: 13px; color: var(--gold); font-weight: 700; }
+  .rc-name { font-size: 15px; font-weight: 600; margin-top: 2px; }
+  .rc-status { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .rc-del { background: none; border: none; color: var(--red); font-size: 18px; cursor: pointer; padding: 4px; }
 </style>
 </head>
 <body>
 
-<!-- REMINDER ALERT -->
 <div class="reminder-alert" id="reminderAlert">
   <div class="ra-title">🔔 Нагадування</div>
   <div class="ra-text" id="reminderText"></div>
@@ -168,9 +176,9 @@
   <div id="dayMeetings"></div>
 </div>
 
-<div class="screen" id="screen-clients">
-  <div class="header"><h1>Клієн<span>ти</span></h1></div>
-  <div id="clientsList"></div>
+<div class="screen" id="screen-reminders">
+  <div class="header"><h1>Нагаду<span>вання</span></h1><button class="btn-gold" onclick="openAddReminder()">+ Нагадування</button></div>
+  <div id="remindersList"></div>
 </div>
 
 <div class="screen" id="screen-analytics">
@@ -187,31 +195,21 @@
 <div class="screen" id="screen-settings">
   <div class="header"><h1>Налаш<span>тування</span></h1></div>
   <div class="settings-section">
-    <div class="settings-title">Нагадування</div>
-    <div class="settings-row">
-      <span class="settings-row-label">Нагадування увімкнено</span>
-      <button class="toggle on" id="toggleRemind" onclick="toggleSetting('remind',this)"></button>
-    </div>
-    <div class="settings-row">
-      <span class="settings-row-label">За скільки хвилин</span>
-      <select class="form-input" style="width:auto;padding:6px 10px" id="remindBefore" onchange="saveSetting('remindBefore',this.value)">
-        <option value="10">10 хв</option>
-        <option value="15" selected>15 хв</option>
-        <option value="30">30 хв</option>
-        <option value="60">1 год</option>
-      </select>
-    </div>
-    <div class="settings-row">
-      <span class="settings-row-label">Звук нагадування</span>
-      <button class="toggle on" id="toggleSound" onclick="toggleSetting('sound',this)"></button>
+    <div class="settings-title">Telegram Bot</div>
+    <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:10px">
+      <span class="settings-row-label">Chat ID</span>
+      <input class="form-input" id="tgChatId" placeholder="776269019" oninput="saveTgSettings()">
+      <span class="settings-row-label" style="margin-top:4px">Токен бота</span>
+      <input class="form-input" id="tgToken" placeholder="8878607265:AAG..." oninput="saveTgSettings()">
+      <button class="btn-gold" style="margin-top:4px" onclick="testTgBot()">Перевірити підключення</button>
+      <div id="tgStatusBadge"></div>
     </div>
   </div>
   <div class="settings-section">
-    <div class="settings-title">Telegram Bot</div>
-    <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:10px">
-      <span class="settings-row-label" style="color:var(--text-dim);font-size:13px">Введи свій Telegram Chat ID для push-сповіщень</span>
-      <input class="form-input" id="tgChatId" placeholder="Наприклад: 123456789" oninput="saveSetting('tgChatId',this.value)">
-      <span style="font-size:12px;color:var(--text-muted)">Знайди @userinfobot в Telegram і надішли /start</span>
+    <div class="settings-title">Нагадування в додатку</div>
+    <div class="settings-row">
+      <span class="settings-row-label">Звук нагадування</span>
+      <button class="toggle on" id="toggleSound" onclick="toggleSetting('sound',this)"></button>
     </div>
   </div>
   <div class="settings-section">
@@ -227,15 +225,15 @@
   </div>
 </div>
 
-<!-- BOTTOM NAV -->
+<!-- NAV -->
 <nav class="nav">
   <button class="nav-btn active" onclick="showScreen('cal',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Календар
   </button>
-  <button class="nav-btn" onclick="showScreen('clients',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
-    Клієнти
+  <button class="nav-btn" onclick="showScreen('reminders',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    Нагадування
   </button>
   <button class="nav-btn" onclick="showScreen('analytics',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -247,7 +245,7 @@
   </button>
 </nav>
 
-<!-- ADD MEETING MODAL -->
+<!-- MEETING MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -257,11 +255,11 @@
       <input class="form-input" id="fClient" placeholder="Ім'я клієнта або компанія">
     </div>
     <div class="form-group">
-      <label class="form-label">Дата</label>
+      <label class="form-label">Дата зустрічі</label>
       <input class="form-input" type="date" id="fDate">
     </div>
     <div class="form-group">
-      <label class="form-label">Час</label>
+      <label class="form-label">Час зустрічі</label>
       <input class="form-input" type="time" id="fTime">
     </div>
     <div class="form-group">
@@ -279,13 +277,39 @@
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Нагадати за</label>
-      <div class="remind-row" id="remindChips">
-        <div class="remind-chip" data-min="10" onclick="selectRemind(this)">10 хв</div>
-        <div class="remind-chip selected" data-min="15" onclick="selectRemind(this)">15 хв</div>
-        <div class="remind-chip" data-min="30" onclick="selectRemind(this)">30 хв</div>
-        <div class="remind-chip" data-min="60" onclick="selectRemind(this)">1 год</div>
-        <div class="remind-chip" data-min="0" onclick="selectRemind(this)">Не нагадувати</div>
+      <label class="form-label">🔔 Нагадування</label>
+      <div class="remind-section">
+        <div class="remind-type-toggle">
+          <button class="rtt-btn active" onclick="setRemindType('before',this)">За певний час</button>
+          <button class="rtt-btn" onclick="setRemindType('exact',this)">Точна дата/час</button>
+          <button class="rtt-btn" onclick="setRemindType('none',this)">Не нагадувати</button>
+        </div>
+        <div class="remind-block active" id="rb-before">
+          <div class="remind-row-inline">
+            <span class="remind-label">За</span>
+            <input class="remind-input-sm" type="number" id="remindAmount" value="30" min="1" max="999">
+            <div class="remind-unit-tabs">
+              <div class="remind-unit selected" data-unit="хв" onclick="selectUnit(this)">хв</div>
+              <div class="remind-unit" data-unit="год" onclick="selectUnit(this)">год</div>
+              <div class="remind-unit" data-unit="дн" onclick="selectUnit(this)">дн</div>
+            </div>
+          </div>
+          <div class="tg-note" id="tgNoteRemind">📱 Telegram нагадування активне</div>
+        </div>
+        <div class="remind-block" id="rb-exact">
+          <div class="remind-row-inline">
+            <span class="remind-label">Дата</span>
+            <input class="form-input" type="date" id="remindDate" style="flex:1;padding:8px 10px">
+          </div>
+          <div class="remind-row-inline" style="margin-top:8px">
+            <span class="remind-label">Час</span>
+            <input class="form-input" type="time" id="remindTime" style="flex:1;padding:8px 10px">
+          </div>
+          <div class="tg-note" id="tgNoteExact">📱 Telegram нагадування активне</div>
+        </div>
+        <div class="remind-block" id="rb-none">
+          <div style="font-size:13px;color:var(--text-muted);padding:8px 0">Нагадування вимкнено для цієї зустрічі</div>
+        </div>
       </div>
     </div>
     <div class="form-group">
@@ -296,92 +320,157 @@
       <button class="btn-cancel" onclick="closeModalDirect()">Скасувати</button>
       <button class="btn-save" onclick="saveMeeting()">Зберегти</button>
     </div>
+    <button class="btn-delete" id="btnDelete" style="display:none" onclick="deleteMeeting()">Видалити зустріч</button>
+  </div>
+</div>
+
+<!-- REMINDER MODAL -->
+<div class="modal-overlay" id="remindModalOverlay" onclick="closeRemindModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Нове нагадування</h2>
+    <div class="form-group">
+      <label class="form-label">Текст нагадування</label>
+      <input class="form-input" id="rfText" placeholder="Що нагадати?">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Дата</label>
+      <input class="form-input" type="date" id="rfDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Час</label>
+      <input class="form-input" type="time" id="rfTime">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Повторювати</label>
+      <select class="form-input" id="rfRepeat">
+        <option value="none">Не повторювати</option>
+        <option value="daily">Щодня</option>
+        <option value="weekly">Щотижня</option>
+        <option value="monthly">Щомісяця</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeRemindModalDirect()">Скасувати</button>
+      <button class="btn-save" onclick="saveReminder()">Зберегти</button>
+    </div>
   </div>
 </div>
 
 <script>
-// ─── STATE ───
-let meetings = JSON.parse(localStorage.getItem('crm_meetings') || '[]');
-let settings = JSON.parse(localStorage.getItem('crm_settings') || '{"remind":true,"sound":true,"remindBefore":15,"tgChatId":""}');
+const TG_TOKEN = '8878607265:AAGXv9m0grhSRmQgp51aoxBWgpCKTnsXnvU';
+const TG_CHAT  = '776269019';
+
+let meetings  = JSON.parse(localStorage.getItem('crm_meetings')  || '[]');
+let reminders = JSON.parse(localStorage.getItem('crm_reminders') || '[]');
+let settings  = JSON.parse(localStorage.getItem('crm_settings')  || '{"sound":true,"tgChatId":"'+TG_CHAT+'","tgToken":"'+TG_TOKEN+'"}');
+if(!settings.tgChatId) settings.tgChatId = TG_CHAT;
+if(!settings.tgToken)  settings.tgToken  = TG_TOKEN;
+
 let currentMonth = new Date().getMonth();
-let currentYear = new Date().getFullYear();
+let currentYear  = new Date().getFullYear();
 let selectedDate = new Date().toISOString().split('T')[0];
 let editId = null;
 let selectedPriority = 'hot';
-let selectedRemind = 15;
+let remindType = 'before';
+let remindUnit = 'хв';
 
-const priorityColors = { hot:'#E05555', warm:'#E07B30', cool:'#4A90D9', done:'#4CAF50', vip:'#9B59B6' };
-const priorityLabels = { hot:'Гаряча', warm:'Звичайна', cool:'Планова', done:'Без терміновості', vip:'VIP' };
+const priorityColors  = {hot:'#E05555',warm:'#E07B30',cool:'#4A90D9',done:'#4CAF50',vip:'#9B59B6'};
+const priorityLabels  = {hot:'Гаряча',warm:'Звичайна',cool:'Планова',done:'Без терміновості',vip:'VIP'};
 const months = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
-const days = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+const days   = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
 
-// ─── SAVE ───
-function save() { localStorage.setItem('crm_meetings', JSON.stringify(meetings)); }
-function saveSetting(k,v) { settings[k]=v; localStorage.setItem('crm_settings',JSON.stringify(settings)); }
-function toggleSetting(k,btn) { settings[k]=!settings[k]; btn.classList.toggle('on',settings[k]); saveSetting(k,settings[k]); }
+function save(){ localStorage.setItem('crm_meetings',JSON.stringify(meetings)); }
+function saveReminders(){ localStorage.setItem('crm_reminders',JSON.stringify(reminders)); }
+function saveTgSettings(){
+  settings.tgChatId = document.getElementById('tgChatId').value.trim();
+  settings.tgToken  = document.getElementById('tgToken').value.trim();
+  localStorage.setItem('crm_settings',JSON.stringify(settings));
+}
+function toggleSetting(k,btn){ settings[k]=!settings[k]; btn.classList.toggle('on',settings[k]); localStorage.setItem('crm_settings',JSON.stringify(settings)); }
 
-// ─── NAVIGATION ───
-function showScreen(id, btn) {
+// ── TELEGRAM ──
+async function sendTg(text){
+  const token = settings.tgToken || TG_TOKEN;
+  const chat  = settings.tgChatId || TG_CHAT;
+  if(!token||!chat) return false;
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({chat_id:chat, text, parse_mode:'HTML'})
+    });
+    const d = await r.json();
+    return d.ok;
+  } catch(e){ return false; }
+}
+async function testTgBot(){
+  const badge = document.getElementById('tgStatusBadge');
+  badge.innerHTML = '<div class="tg-status" style="background:rgba(207,176,80,.1);color:var(--gold)">⏳ Перевіряємо...</div>';
+  const ok = await sendTg('✅ <b>КонтентКРЕО CRM</b>\nПідключення успішне! Бот працює.');
+  badge.innerHTML = ok
+    ? '<div class="tg-status ok">✅ Підключено — перевір Telegram</div>'
+    : '<div class="tg-status err">❌ Помилка — перевір токен і Chat ID</div>';
+}
+
+// ── NAVIGATION ──
+function showScreen(id,btn){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
   btn.classList.add('active');
   if(id==='analytics') renderAnalytics();
-  if(id==='clients') renderClients();
+  if(id==='reminders') renderRemindersList();
+  if(id==='settings'){ document.getElementById('tgChatId').value=settings.tgChatId||TG_CHAT; document.getElementById('tgToken').value=settings.tgToken||TG_TOKEN; }
 }
 
-// ─── CALENDAR ───
-function renderCalendar() {
-  document.getElementById('calMonthLabel').textContent = months[currentMonth] + ' ' + currentYear;
+// ── CALENDAR ──
+function renderCalendar(){
+  document.getElementById('calMonthLabel').textContent = months[currentMonth]+' '+currentYear;
   const grid = document.getElementById('calGrid');
   grid.innerHTML = days.map(d=>`<div class="cal-day-name">${d}</div>`).join('');
-  const first = new Date(currentYear, currentMonth, 1);
+  const first = new Date(currentYear,currentMonth,1);
   let startDay = (first.getDay()+6)%7;
-  const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
-  const prevDays = new Date(currentYear, currentMonth, 0).getDate();
+  const dim = new Date(currentYear,currentMonth+1,0).getDate();
+  const prev = new Date(currentYear,currentMonth,0).getDate();
   const today = new Date().toISOString().split('T')[0];
-  for(let i=0;i<startDay;i++){
-    const d = prevDays-startDay+1+i;
-    grid.innerHTML += `<div class="cal-day other-month">${d}</div>`;
-  }
-  for(let d=1;d<=daysInMonth;d++){
-    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const ms = meetings.filter(m=>m.date===dateStr);
-    let cls = 'cal-day';
-    if(dateStr===today) cls+=' today';
-    if(dateStr===selectedDate) cls+=' selected';
-    const dots = ms.length ? `<div class="cal-dot" style="background:${priorityColors[ms[0].priority]||'var(--gold)'}"></div>` : '';
-    grid.innerHTML += `<div class="${cls}" onclick="selectDay('${dateStr}')">${d}${dots}</div>`;
+  for(let i=0;i<startDay;i++) grid.innerHTML+=`<div class="cal-day other-month">${prev-startDay+1+i}</div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ms=meetings.filter(m=>m.date===ds);
+    let cls='cal-day';
+    if(ds===today) cls+=' today';
+    if(ds===selectedDate) cls+=' selected';
+    const dot=ms.length?`<div class="cal-dot" style="background:${priorityColors[ms[0].priority]||'var(--gold)'}"></div>`:'';
+    grid.innerHTML+=`<div class="${cls}" onclick="selectDay('${ds}')">${d}${dot}</div>`;
   }
   renderDayMeetings();
 }
 function changeMonth(dir){currentMonth+=dir;if(currentMonth>11){currentMonth=0;currentYear++;}if(currentMonth<0){currentMonth=11;currentYear--;}renderCalendar();}
 function selectDay(date){selectedDate=date;renderCalendar();}
 function renderDayMeetings(){
-  const d = new Date(selectedDate);
-  const label = d.toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('dayLabel').textContent = label.charAt(0).toUpperCase()+label.slice(1);
-  const ms = meetings.filter(m=>m.date===selectedDate).sort((a,b)=>a.time.localeCompare(b.time));
-  const el = document.getElementById('dayMeetings');
+  const d=new Date(selectedDate);
+  const label=d.toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('dayLabel').textContent=label.charAt(0).toUpperCase()+label.slice(1);
+  const ms=meetings.filter(m=>m.date===selectedDate).sort((a,b)=>a.time.localeCompare(b.time));
+  const el=document.getElementById('dayMeetings');
   if(!ms.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📅</div>Немає зустрічей на цей день</div>`;return;}
-  el.innerHTML = ms.map(m=>`
-    <div class="meeting-card ${m.done?'done':''}" style="border-left-color:${priorityColors[m.priority]||'var(--gold)'}">
+  el.innerHTML=ms.map(m=>`
+    <div class="meeting-card ${m.done?'done':''}" style="border-left-color:${priorityColors[m.priority]||'var(--gold)'}" data-id="${m.id}">
       <div class="mc-time">${m.time}</div>
       <div class="mc-info">
         <div class="mc-name">${m.client}</div>
-        <div class="mc-sub">${m.topic||''} ${m.note?'· '+m.note:''}</div>
+        <div class="mc-sub">${m.topic||''}${m.note?' · '+m.note:''}</div>
       </div>
       <span class="mc-badge badge-${m.priority}">${priorityLabels[m.priority]||''}</span>
       <button class="mc-done-btn ${m.done?'done':''}" onclick="toggleDone('${m.id}',event)">✓</button>
-    </div>
-  `).join('');
-  el.querySelectorAll('.meeting-card').forEach((card,i)=>{
-    card.addEventListener('click',()=>openEditModal(ms[i].id));
+    </div>`).join('');
+  el.querySelectorAll('.meeting-card').forEach(card=>{
+    card.addEventListener('click',()=>openEditModal(card.dataset.id));
   });
 }
 function toggleDone(id,e){e.stopPropagation();const m=meetings.find(x=>x.id===id);if(m)m.done=!m.done;save();renderDayMeetings();renderCalendar();}
 
-// ─── MODAL ───
+// ── MEETING MODAL ──
 function openAddModal(){
   editId=null;
   document.getElementById('modalTitle').textContent='Нова зустріч';
@@ -390,137 +479,207 @@ function openAddModal(){
   document.getElementById('fTime').value='10:00';
   document.getElementById('fTopic').value='';
   document.getElementById('fNote').value='';
+  document.getElementById('btnDelete').style.display='none';
   selectPriorityByKey('hot');
-  selectRemindByMin(15);
+  setRemindType('before', document.querySelector('.rtt-btn'));
+  document.getElementById('remindAmount').value=30;
+  document.getElementById('remindDate').value=selectedDate;
+  document.getElementById('remindTime').value='09:00';
   document.getElementById('modalOverlay').classList.add('open');
 }
 function openEditModal(id){
-  const m=meetings.find(x=>x.id===id);if(!m)return;
+  const m=meetings.find(x=>x.id===id); if(!m) return;
   editId=id;
-  document.getElementById('modalTitle').textContent='Редагувати зустріч';
+  document.getElementById('modalTitle').textContent='Редагувати';
   document.getElementById('fClient').value=m.client;
   document.getElementById('fDate').value=m.date;
   document.getElementById('fTime').value=m.time;
   document.getElementById('fTopic').value=m.topic||'';
   document.getElementById('fNote').value=m.note||'';
+  document.getElementById('btnDelete').style.display='block';
   selectPriorityByKey(m.priority);
-  selectRemindByMin(m.remindMin);
+  // restore remind
+  const rt = m.remind?.type || 'none';
+  const btns = document.querySelectorAll('.rtt-btn');
+  const idx = rt==='before'?0:rt==='exact'?1:2;
+  setRemindType(rt, btns[idx]);
+  if(rt==='before'){ document.getElementById('remindAmount').value=m.remind.amount||30; selectUnitByVal(m.remind.unit||'хв'); }
+  if(rt==='exact'){ document.getElementById('remindDate').value=m.remind.date||m.date; document.getElementById('remindTime').value=m.remind.time||'09:00'; }
   document.getElementById('modalOverlay').classList.add('open');
 }
 function closeModal(e){if(e.target===document.getElementById('modalOverlay'))closeModalDirect();}
 function closeModalDirect(){document.getElementById('modalOverlay').classList.remove('open');}
 function selectPriority(el){document.querySelectorAll('.color-opt').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selectedPriority=el.dataset.priority;}
-function selectPriorityByKey(key){document.querySelectorAll('.color-opt').forEach(x=>{x.classList.toggle('selected',x.dataset.priority===key)});selectedPriority=key;}
-function selectRemind(el){document.querySelectorAll('.remind-chip').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selectedRemind=parseInt(el.dataset.min);}
-function selectRemindByMin(min){document.querySelectorAll('.remind-chip').forEach(x=>{x.classList.toggle('selected',parseInt(x.dataset.min)===min)});selectedRemind=min;}
-function saveMeeting(){
+function selectPriorityByKey(key){document.querySelectorAll('.color-opt').forEach(x=>x.classList.toggle('selected',x.dataset.priority===key));selectedPriority=key;}
+function setRemindType(type, btn){
+  remindType=type;
+  document.querySelectorAll('.rtt-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.remind-block').forEach(b=>b.classList.remove('active'));
+  const map={before:'rb-before',exact:'rb-exact',none:'rb-none'};
+  document.getElementById(map[type]).classList.add('active');
+}
+function selectUnit(el){document.querySelectorAll('.remind-unit').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');remindUnit=el.dataset.unit;}
+function selectUnitByVal(val){document.querySelectorAll('.remind-unit').forEach(x=>{x.classList.toggle('selected',x.dataset.unit===val)});remindUnit=val;}
+
+async function saveMeeting(){
   const client=document.getElementById('fClient').value.trim();
   const date=document.getElementById('fDate').value;
   const time=document.getElementById('fTime').value;
   if(!client||!date||!time){alert('Заповни клієнта, дату і час');return;}
-  if(editId){
-    const m=meetings.find(x=>x.id===editId);
-    Object.assign(m,{client,date,time,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value,priority:selectedPriority,remindMin:selectedRemind});
-  } else {
-    meetings.push({id:Date.now().toString(),client,date,time,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value,priority:selectedPriority,remindMin:selectedRemind,done:false,created:new Date().toISOString()});
+
+  let remind={type:'none'};
+  if(remindType==='before'){
+    remind={type:'before',amount:parseInt(document.getElementById('remindAmount').value)||30,unit:remindUnit};
+  } else if(remindType==='exact'){
+    remind={type:'exact',date:document.getElementById('remindDate').value,time:document.getElementById('remindTime').value};
   }
-  save();closeModalDirect();renderCalendar();scheduleReminders();
+
+  const obj={id:editId||Date.now().toString(),client,date,time,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value,priority:selectedPriority,remind,done:editId?(meetings.find(x=>x.id===editId)?.done||false):false,created:new Date().toISOString()};
+  if(editId){ const idx=meetings.findIndex(x=>x.id===editId); meetings[idx]=obj; }
+  else meetings.push(obj);
+  save();
+  closeModalDirect();
+  renderCalendar();
+  scheduleReminders();
+
+  // Send TG confirmation
+  const remindStr = remind.type==='before' ? `за ${remind.amount} ${remind.unit}` : remind.type==='exact' ? `${remind.date} о ${remind.time}` : 'без нагадування';
+  await sendTg(`📅 <b>Зустріч збережено</b>\n👤 ${client}\n📆 ${date} о ${time}\n📋 ${obj.topic||'—'}\n🔔 Нагадування: ${remindStr}`);
+}
+async function deleteMeeting(){
+  if(!editId) return;
+  if(!confirm('Видалити зустріч?')) return;
+  meetings=meetings.filter(x=>x.id!==editId);
+  save(); closeModalDirect(); renderCalendar(); scheduleReminders();
 }
 
-// ─── REMINDERS ───
-let reminderTimers=[];
+// ── REMINDERS ──
+function openAddReminder(){
+  document.getElementById('rfText').value='';
+  document.getElementById('rfDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('rfTime').value='09:00';
+  document.getElementById('rfRepeat').value='none';
+  document.getElementById('remindModalOverlay').classList.add('open');
+}
+function closeRemindModal(e){if(e.target===document.getElementById('remindModalOverlay'))closeRemindModalDirect();}
+function closeRemindModalDirect(){document.getElementById('remindModalOverlay').classList.remove('open');}
+async function saveReminder(){
+  const text=document.getElementById('rfText').value.trim();
+  const date=document.getElementById('rfDate').value;
+  const time=document.getElementById('rfTime').value;
+  if(!text||!date||!time){alert('Заповни текст, дату і час');return;}
+  const r={id:Date.now().toString(),text,date,time,repeat:document.getElementById('rfRepeat').value,done:false};
+  reminders.push(r);
+  saveReminders();
+  closeRemindModalDirect();
+  renderRemindersList();
+  scheduleReminders();
+  await sendTg(`🔔 <b>Нагадування встановлено</b>\n📝 ${text}\n📆 ${date} о ${time}`);
+}
+function deleteReminder(id){reminders=reminders.filter(x=>x.id!==id);saveReminders();renderRemindersList();scheduleReminders();}
+function renderRemindersList(){
+  const el=document.getElementById('remindersList');
+  const upcoming=reminders.filter(r=>!r.done||r.repeat!=='none').sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  // also add meeting reminders
+  const meetReminders=[];
+  meetings.filter(m=>!m.done&&m.remind?.type!=='none').forEach(m=>{
+    let rt='';
+    if(m.remind.type==='before'){
+      const mult={хв:60000,год:3600000,дн:86400000}[m.remind.unit]||60000;
+      const remTime=new Date(new Date(m.date+'T'+m.time).getTime()-m.remind.amount*mult);
+      rt=remTime.toISOString().split('T')[0]+' о '+remTime.toTimeString().slice(0,5);
+    } else {
+      rt=(m.remind.date||m.date)+' о '+(m.remind.time||'00:00');
+    }
+    meetReminders.push({text:`Зустріч з ${m.client}`,when:rt,icon:'📅'});
+  });
+  if(!upcoming.length&&!meetReminders.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🔔</div>Немає нагадувань</div>`;return;}
+  el.innerHTML=
+    meetReminders.map(r=>`<div class="remind-card"><div class="rc-icon">${r.icon}</div><div class="rc-info"><div class="rc-time">${r.when}</div><div class="rc-name">${r.text}</div><div class="rc-status">Від зустрічі · Telegram</div></div></div>`).join('')+
+    upcoming.map(r=>`<div class="remind-card"><div class="rc-icon">🔔</div><div class="rc-info"><div class="rc-time">${r.date} о ${r.time}</div><div class="rc-name">${r.text}</div><div class="rc-status">${r.repeat==='none'?'Одноразово':r.repeat==='daily'?'Щодня':r.repeat==='weekly'?'Щотижня':'Щомісяця'}</div></div><button class="rc-del" onclick="deleteReminder('${r.id}')">✕</button></div>`).join('');
+}
+
+// ── SCHEDULER ──
+let timers=[];
 function scheduleReminders(){
-  reminderTimers.forEach(clearTimeout);reminderTimers=[];
-  if(!settings.remind)return;
+  timers.forEach(clearTimeout); timers=[];
   const now=Date.now();
-  meetings.filter(m=>!m.done).forEach(m=>{
-    const meetTime=new Date(m.date+'T'+m.time).getTime();
-    const remindTime=meetTime-(m.remindMin||15)*60000;
-    const diff=remindTime-now;
-    if(diff>0&&diff<24*60*60*1000){
-      reminderTimers.push(setTimeout(()=>showReminder(m),diff));
+  // meeting reminders
+  meetings.filter(m=>!m.done&&m.remind?.type!=='none').forEach(m=>{
+    let remTime;
+    if(m.remind.type==='before'){
+      const mult={хв:60000,год:3600000,дн:86400000}[m.remind.unit]||60000;
+      remTime=new Date(m.date+'T'+m.time).getTime()-m.remind.amount*mult;
+    } else {
+      remTime=new Date(m.remind.date+'T'+m.remind.time).getTime();
+    }
+    const diff=remTime-now;
+    if(diff>0&&diff<7*24*60*60*1000){
+      timers.push(setTimeout(async()=>{
+        showReminderAlert(`${m.time} — ${m.client}${m.topic?' ('+m.topic+')':''}`);
+        await sendTg(`🔔 <b>Нагадування!</b>\n📅 Зустріч о ${m.time}\n👤 ${m.client}\n📋 ${m.topic||'—'}`);
+      },diff));
+    }
+  });
+  // standalone reminders
+  reminders.filter(r=>!r.done).forEach(r=>{
+    const remTime=new Date(r.date+'T'+r.time).getTime();
+    const diff=remTime-now;
+    if(diff>0&&diff<7*24*60*60*1000){
+      timers.push(setTimeout(async()=>{
+        showReminderAlert(r.text);
+        await sendTg(`🔔 <b>Нагадування!</b>\n📝 ${r.text}`);
+        if(r.repeat==='none'){r.done=true;saveReminders();}
+      },diff));
     }
   });
 }
-function showReminder(m){
-  document.getElementById('reminderText').textContent=`${m.time} — ${m.client}${m.topic?' ('+m.topic+')':''}`;
+function showReminderAlert(text){
+  document.getElementById('reminderText').textContent=text;
   document.getElementById('reminderAlert').classList.add('show');
-  if(settings.sound){try{const ctx=new AudioContext();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.8);o.start();o.stop(ctx.currentTime+0.8);}catch(e){}}
-  setTimeout(()=>document.getElementById('reminderAlert').classList.remove('show'),8000);
+  if(settings.sound){try{const ctx=new AudioContext();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+1);o.start();o.stop(ctx.currentTime+1);}catch(e){}}
+  setTimeout(()=>document.getElementById('reminderAlert').classList.remove('show'),10000);
 }
 function closeReminder(){document.getElementById('reminderAlert').classList.remove('show');}
 
-// ─── ANALYTICS ───
+// ── ANALYTICS ──
 let analyticsPeriod='month';
 function setPeriod(p,btn){analyticsPeriod=p;document.querySelectorAll('.period-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderAnalytics();}
 function renderAnalytics(){
   const now=new Date();
-  let filtered=meetings;
-  if(analyticsPeriod==='week'){const w=new Date(now);w.setDate(w.getDate()-7);filtered=meetings.filter(m=>new Date(m.date)>=w);}
-  else if(analyticsPeriod==='month'){filtered=meetings.filter(m=>m.date.startsWith(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`))}
-  else{filtered=meetings.filter(m=>m.date.startsWith(now.getFullYear().toString()))}
-  const total=filtered.length;
-  const done=filtered.filter(m=>m.done).length;
-  const clients=new Set(filtered.map(m=>m.client)).size;
-  const hot=filtered.filter(m=>m.priority==='hot'||m.priority==='vip').length;
+  let f=meetings;
+  if(analyticsPeriod==='week'){const w=new Date(now);w.setDate(w.getDate()-7);f=meetings.filter(m=>new Date(m.date)>=w);}
+  else if(analyticsPeriod==='month'){f=meetings.filter(m=>m.date.startsWith(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`))}
+  else{f=meetings.filter(m=>m.date.startsWith(now.getFullYear().toString()))}
+  const total=f.length,done=f.filter(m=>m.done).length,clients=new Set(f.map(m=>m.client)).size,hot=f.filter(m=>m.priority==='hot'||m.priority==='vip').length;
   document.getElementById('statsGrid').innerHTML=`
     <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-label">Всього зустрічей</div></div>
     <div class="stat-card"><div class="stat-val">${done}</div><div class="stat-label">Проведено</div></div>
     <div class="stat-card"><div class="stat-val">${clients}</div><div class="stat-label">Клієнтів</div></div>
-    <div class="stat-card"><div class="stat-val">${hot}</div><div class="stat-label">Важливих</div></div>
-  `;
-  // Bar chart by week/month
+    <div class="stat-card"><div class="stat-val">${hot}</div><div class="stat-label">Важливих</div></div>`;
   const barEl=document.getElementById('barChart');
   if(analyticsPeriod==='year'){
-    const byMonth=Array(12).fill(0);
-    filtered.forEach(m=>{const mn=parseInt(m.date.split('-')[1])-1;byMonth[mn]++;});
-    const max=Math.max(...byMonth,1);
-    barEl.innerHTML=`<h3>По місяцях</h3><div class="bars">${byMonth.map((v,i)=>`<div class="bar-col"><div class="bar-val">${v||''}</div><div class="bar-fill" style="height:${Math.round(v/max*100)}%"></div><div class="bar-lbl">${months[i].slice(0,3)}</div></div>`).join('')}</div>`;
+    const bm=Array(12).fill(0);f.forEach(m=>{bm[parseInt(m.date.split('-')[1])-1]++;});
+    const max=Math.max(...bm,1);
+    barEl.innerHTML=`<h3>По місяцях</h3><div class="bars">${bm.map((v,i)=>`<div class="bar-col"><div class="bar-val">${v||''}</div><div class="bar-fill" style="height:${Math.round(v/max*100)}%"></div><div class="bar-lbl">${months[i].slice(0,3)}</div></div>`).join('')}</div>`;
   } else {
-    const byDay={};filtered.forEach(m=>{byDay[m.date]=(byDay[m.date]||0)+1;});
-    const sorted=Object.entries(byDay).sort((a,b)=>a[0].localeCompare(b[0])).slice(-7);
+    const bd={};f.forEach(m=>{bd[m.date]=(bd[m.date]||0)+1;});
+    const sorted=Object.entries(bd).sort((a,b)=>a[0].localeCompare(b[0])).slice(-7);
     if(!sorted.length){barEl.innerHTML='<h3>Немає даних</h3>';return;}
     const max=Math.max(...sorted.map(x=>x[1]),1);
     barEl.innerHTML=`<h3>Зустрічі по днях</h3><div class="bars">${sorted.map(([d,v])=>`<div class="bar-col"><div class="bar-val">${v}</div><div class="bar-fill" style="height:${Math.round(v/max*100)}%"></div><div class="bar-lbl">${d.slice(5)}</div></div>`).join('')}</div>`;
   }
 }
 
-// ─── CLIENTS ───
-function renderClients(){
-  const map={};
-  meetings.forEach(m=>{if(!map[m.client])map[m.client]={count:0,done:0,last:''};map[m.client].count++;if(m.done)map[m.client].done++;if(m.date>map[m.client].last)map[m.client].last=m.date;});
-  const list=document.getElementById('clientsList');
-  if(!Object.keys(map).length){list.innerHTML=`<div class="empty"><div class="empty-icon">👤</div>Клієнтів ще немає</div>`;return;}
-  list.innerHTML=Object.entries(map).sort((a,b)=>b[1].count-a[1].count).map(([name,data])=>`
-    <div class="client-card">
-      <div class="client-avatar">${name.charAt(0).toUpperCase()}</div>
-      <div class="client-info">
-        <div class="client-name">${name}</div>
-        <div class="client-meta">Остання: ${data.last||'—'} · Проведено: ${data.done}/${data.count}</div>
-      </div>
-      <div class="client-count">${data.count} зустр.</div>
-    </div>
-  `).join('');
-}
+function exportData(){const blob=new Blob([JSON.stringify({meetings,reminders},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crm_backup.json';a.click();}
+function clearAll(){if(confirm('Видалити всі дані?')){meetings=[];reminders=[];save();saveReminders();renderCalendar();}}
 
-// ─── EXPORT ───
-function exportData(){
-  const blob=new Blob([JSON.stringify(meetings,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crm_backup.json';a.click();
-}
-function clearAll(){if(confirm('Видалити всі дані?')){meetings=[];save();renderCalendar();}}
-
-// ─── INIT ───
 function init(){
   renderCalendar();
   scheduleReminders();
   setInterval(scheduleReminders,60000);
-  // load settings UI
-  document.getElementById('toggleRemind').classList.toggle('on',settings.remind);
   document.getElementById('toggleSound').classList.toggle('on',settings.sound);
-  document.getElementById('tgChatId').value=settings.tgChatId||'';
-  const rb=document.getElementById('remindBefore');
-  if(rb)rb.value=settings.remindBefore||15;
 }
 init();
 </script>
