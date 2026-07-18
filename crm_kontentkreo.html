@@ -420,7 +420,7 @@ function applyCustomColor(key,val){
   localStorage.setItem('crm_settings',JSON.stringify(settings));
 }
 function renderThemeGrid(){
-  const cur=settings.theme?.name||'Чорний/Золото';
+  const cur=((settings.theme&&settings.theme.name)?settings.theme.name:'Чорний/Золото');
   document.getElementById('themeGrid').innerHTML=themes.map((t,i)=>`
     <div class="theme-card ${t.name===cur?'selected':''}" style="background:${t.bg}" onclick="applyTheme(themes[${i}])">
       <div class="theme-preview">
@@ -554,7 +554,7 @@ function openEditModal(id){
   currentAttachments=m.attachments?[...m.attachments]:[];
   renderAttachPreview();
   selectPriorityByKey(m.priority);
-  const rt=m.remind?.type||'none';
+  const rt=(m.remind&&m.remind.type?m.remind.type:'none');
   const btns=document.querySelectorAll('.rtt-btn');
   setRemindType(rt,btns[rt==='before'?0:rt==='exact'?1:2]);
   if(rt==='before'){document.getElementById('remindAmount').value=m.remind.amount||30;selectUnitByVal(m.remind.unit||'хв');}
@@ -577,7 +577,7 @@ async function saveMeeting(){
   let remind={type:'none'};
   if(remindType==='before') remind={type:'before',amount:parseInt(document.getElementById('remindAmount').value)||30,unit:remindUnit};
   else if(remindType==='exact') remind={type:'exact',date:document.getElementById('remindDate').value,time:document.getElementById('remindTime').value};
-  const obj={id:editId||Date.now().toString(),client,phone:document.getElementById('fPhone').value.trim(),date,time,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value,priority:selectedPriority,remind,attachments:[...currentAttachments],done:editId?(meetings.find(x=>x.id===editId)?.done||false):false,created:new Date().toISOString()};
+  const obj={id:editId||Date.now().toString(),client,phone:document.getElementById('fPhone').value.trim(),date,time,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value,priority:selectedPriority,remind,attachments:[...currentAttachments],done:editId?(!!(meetings.find(function(x){return x.id===editId;})||{}).done):false,created:new Date().toISOString()};
   if(editId){meetings[meetings.findIndex(x=>x.id===editId)]=obj;}else meetings.push(obj);
   save();closeModalDirect();renderCalendar();scheduleReminders();
   // Offer to add to iOS calendar
@@ -611,7 +611,7 @@ async function saveReminder(){
 function deleteReminder(id){reminders=reminders.filter(x=>x.id!==id);saveReminders();renderRemindersList();scheduleReminders();}
 function renderRemindersList(){
   const el=document.getElementById('remindersList');
-  const meetR=meetings.filter(m=>!m.done&&m.remind?.type!=='none').map(m=>{
+  const meetR=meetings.filter(m=>!m.done&&(m.remind&&m.remind.type&&m.remind.type!=='none')).map(m=>{
     let when='';
     if(m.remind.type==='before'){const mult={хв:60000,год:3600000,дн:86400000}[m.remind.unit]||60000;const t=new Date(new Date(m.date+'T'+m.time).getTime()-m.remind.amount*mult);when=t.toLocaleDateString('uk-UA')+' о '+t.toTimeString().slice(0,5);}
     else when=(m.remind.date||m.date)+' о '+(m.remind.time||'00:00');
@@ -628,7 +628,7 @@ let timers=[];
 function scheduleReminders(){
   timers.forEach(clearTimeout);timers=[];
   const now=Date.now();
-  meetings.filter(m=>!m.done&&m.remind?.type!=='none').forEach(m=>{
+  meetings.filter(m=>!m.done&&(m.remind&&m.remind.type&&m.remind.type!=='none')).forEach(m=>{
     let remTime;
     if(m.remind.type==='before'){const mult={хв:60000,год:3600000,дн:86400000}[m.remind.unit]||60000;remTime=new Date(m.date+'T'+m.time).getTime()-m.remind.amount*mult;}
     else remTime=new Date(m.remind.date+'T'+m.remind.time).getTime();
@@ -905,9 +905,9 @@ function doAddCalendar(m){
 
 function openClientDetail(name){
   const clientMeetings = meetings.filter(m=>m.client===name).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
-  const done = clientMeetings.filter(m=>m.done).length;
-  const phone = clientMeetings.find(m=>m.phone)?.phone||'';
-  const upcoming = clientMeetings.filter(m=>!m.done&&m.date>=new Date().toISOString().split('T')[0]).length;
+  var done = clientMeetings.filter(function(m){return m.done;}).length;
+  var phoneFound = clientMeetings.find(function(m){return m.phone;}); var phone = phoneFound ? phoneFound.phone : '';
+  var today = new Date().toISOString().split('T')[0]; var upcoming = clientMeetings.filter(function(m){return !m.done&&m.date>=today;}).length;
 
   document.getElementById('cdAvatar').textContent = name.charAt(0).toUpperCase();
   document.getElementById('cdName').textContent = name;
@@ -921,9 +921,12 @@ function openClientDetail(name){
   const priorityColors={hot:'#E05555',warm:'#E07B30',cool:'#4A90D9',done:'#4CAF50',vip:'#9B59B6'};
   const priorityLabels={hot:'Гаряча',warm:'Звичайна',cool:'Планова',done:'Планова',vip:'VIP'};
 
-  document.getElementById('cdMeetings').innerHTML = clientMeetings.map(m=>{
-    const attCount = m.attachments&&m.attachments.length ? m.attachments.length : 0;
-    return '<div onclick="openClientMeeting(''+m.id+'')" style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;cursor:pointer;border-left:3px solid '+(priorityColors[m.priority]||'var(--accent)')+(m.done?';opacity:.6':'')+'">'+
+  document.getElementById('cdMeetings').innerHTML = clientMeetings.map(function(m){
+    var attCount = (m.attachments&&m.attachments.length) ? m.attachments.length : 0;
+    var mid = m.id;
+    var borderColor = (priorityColors[m.priority]||'var(--accent)');
+    var opacity = m.done ? ';opacity:.6' : '';
+    return '<div onclick="openClientMeeting(\'' + mid + '\')" style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;cursor:pointer;border-left:3px solid ' + borderColor + opacity + '">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
       '<div style="font-size:13px;color:var(--accent);font-weight:700">'+m.date+' о '+m.time+'</div>'+
       '<div style="display:flex;align-items:center;gap:6px">'+
@@ -944,13 +947,14 @@ function closeClientDetail(e){
 }
 
 function openClientMeeting(id){
-  const m = meetings.find(x=>x.id===id);
+  var m = meetings.find(function(x){return x.id===id;});
   if(!m) return;
   document.getElementById('clientDetailOverlay').classList.remove('open');
   selectedDate = m.date;
-  showScreen('cal', document.querySelector('.nav-btn'));
+  var navBtn = document.querySelector('.nav-btn');
+  if(navBtn) showScreen('cal', navBtn);
   renderCalendar();
-  setTimeout(()=>openEditModal(id), 200);
+  setTimeout(function(){openEditModal(id);}, 300);
 }
 
 function exportData(){const blob=new Blob([JSON.stringify({meetings,reminders},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crm_backup.json';a.click();}
