@@ -580,6 +580,8 @@ async function saveMeeting(){
   const obj={id:editId||Date.now().toString(),client,phone:document.getElementById('fPhone').value.trim(),date,time,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value,priority:selectedPriority,remind,attachments:[...currentAttachments],done:editId?(meetings.find(x=>x.id===editId)?.done||false):false,created:new Date().toISOString()};
   if(editId){meetings[meetings.findIndex(x=>x.id===editId)]=obj;}else meetings.push(obj);
   save();closeModalDirect();renderCalendar();scheduleReminders();
+  // Offer to add to iOS calendar
+  setTimeout(()=>{ showCalendarOffer(obj); }, 400);
   const rs=remind.type==='before'?`за ${remind.amount} ${remind.unit}`:remind.type==='exact'?`${remind.date} о ${remind.time}`:'без нагадування';
   await sendTg(`📅 <b>Зустріч збережено</b>\n👤 ${client}\n📞 ${obj.phone||'—'}\n📆 ${date} о ${time}\n📋 ${obj.topic||'—'}\n🔔 ${rs}`);
 }
@@ -833,6 +835,71 @@ function openAttachById(mid, aid){
   const a = m.attachments.find(x=>x.id===aid);
   if(!a) return;
   showMediaModal(a);
+}
+
+
+
+function showCalendarOffer(m){
+  const d = document.createElement('div');
+  d.id = 'calOffer';
+  d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+  d.innerHTML = `<div style="background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px">
+    <div style="font-size:17px;font-weight:700;margin-bottom:8px">📅 Додати в Календар iPhone?</div>
+    <div style="font-size:14px;color:var(--text-dim);margin-bottom:20px">iPhone надішле нативне сповіщення у потрібний час — навіть коли додаток закритий</div>
+    <button onclick="doAddCalendar(currentCalMeeting);document.getElementById('calOffer').remove()" style="width:100%;background:var(--btn-bg);color:var(--btn-text);border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">Так, додати в календар</button>
+    <button onclick="document.getElementById('calOffer').remove()" style="width:100%;background:var(--surface2);color:var(--text-dim);border:none;border-radius:12px;padding:14px;font-size:15px;cursor:pointer">Пропустити</button>
+  </div>`;
+  document.body.appendChild(d);
+}
+
+let currentCalMeeting = null;
+function showCalendarOffer(m){ currentCalMeeting=m; _showCalOffer(m); }
+function _showCalOffer(m){
+  if(document.getElementById('calOffer')) document.getElementById('calOffer').remove();
+  const d = document.createElement('div');
+  d.id = 'calOffer';
+  d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+  d.innerHTML = '<div style="background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px"><div style="font-size:17px;font-weight:700;margin-bottom:8px">📅 Додати в Календар iPhone?</div><div style="font-size:14px;color:var(--text-dim);margin-bottom:20px">iPhone надішле нативне сповіщення у потрібний час — навіть коли додаток закритий</div><button id="calYes" style="width:100%;background:var(--btn-bg);color:var(--btn-text);border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px">Так, додати в календар</button><button id="calNo" style="width:100%;background:var(--surface2);color:var(--text-dim);border:none;border-radius:12px;padding:14px;font-size:15px;cursor:pointer">Пропустити</button></div>';
+  document.body.appendChild(d);
+  document.getElementById('calYes').onclick = function(){ doAddCalendar(currentCalMeeting); d.remove(); };
+  document.getElementById('calNo').onclick = function(){ d.remove(); };
+}
+
+function doAddCalendar(m){
+  try {
+    const remind = m.remind || {};
+    let alarmMin = 30;
+    if(remind.type==='before'){
+      const mult = {хв:1,год:60,дн:1440}[remind.unit]||1;
+      alarmMin = (parseInt(remind.amount)||30) * mult;
+    } else if(remind.type==='exact' && remind.date && remind.time){
+      const meetTime = new Date(m.date+'T'+m.time).getTime();
+      const remTime = new Date(remind.date+'T'+remind.time).getTime();
+      alarmMin = Math.max(0, Math.round((meetTime - remTime) / 60000));
+    } else if(remind.type==='none'){
+      alarmMin = 0;
+    }
+
+    const start = new Date(m.date+'T'+m.time);
+    const end = new Date(start.getTime() + 60*60*1000);
+
+    const pad = n => String(n).padStart(2,'0');
+    const fmt = d => d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+pad(d.getHours())+pad(d.getMinutes())+'00';
+
+    const alarmStr = alarmMin > 0 ? 'BEGIN:VALARM\r\nTRIGGER:-PT'+alarmMin+'M\r\nACTION:DISPLAY\r\nDESCRIPTION:'+m.client+'\r\nEND:VALARM\r\n' : '';
+
+    const ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//КонтентКРЕО//UA\r\nBEGIN:VEVENT\r\nUID:'+m.id+'@crm\r\nDTSTART:'+fmt(start)+'\r\nDTEND:'+fmt(end)+'\r\nSUMMARY:'+(m.client+(m.topic?' — '+m.topic:''))+'\r\nDESCRIPTION:'+(m.note||'').replace(/\n/g,'\\n')+'\r\n'+alarmStr+'END:VEVENT\r\nEND:VCALENDAR';
+
+    const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'zustrich.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  } catch(e){ alert('Помилка: '+e.message); }
 }
 
 function exportData(){const blob=new Blob([JSON.stringify({meetings,reminders},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crm_backup.json';a.click();}
