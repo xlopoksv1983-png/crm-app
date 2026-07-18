@@ -44,20 +44,20 @@
   .cal-dot { position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; }
 
   .day-label { font-size: 15px; font-weight: 600; color: var(--text-dim); margin: 20px 0 12px; }
-  .meeting-card { background: var(--surface); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; border-left: 4px solid transparent; }
+  .meeting-card { background: var(--surface); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; border-left: 4px solid transparent; overflow: hidden; }
   .meeting-card.done { opacity: .5; }
   .meeting-card.done .mc-name { text-decoration: line-through; }
-  .mc-time { font-size: 13px; color: var(--accent); font-weight: 700; min-width: 42px; }
-  .mc-info { flex: 1; }
+  .mc-time { font-size: 13px; color: var(--accent); font-weight: 700; min-width: 42px; flex-shrink: 0; }
+  .mc-info { flex: 1; min-width: 0; overflow: hidden; }
   .mc-name { font-size: 15px; font-weight: 600; }
   .mc-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
-  .mc-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+  .mc-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
   .badge-hot { background: rgba(224,85,85,.2); color: var(--red); }
   .badge-warm { background: rgba(224,123,48,.2); color: var(--orange); }
   .badge-cool { background: rgba(74,144,217,.2); color: var(--blue); }
   .badge-done { background: rgba(76,175,80,.2); color: var(--green); }
   .badge-vip { background: rgba(155,89,182,.2); color: var(--purple); }
-  .mc-note { font-size: 13px; color: var(--text-dim); margin-top: 4px; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+  .mc-note { font-size: 13px; color: var(--text-dim); margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; line-height: 1.5; max-width: 100%; }
   .mc-attach { font-size: 12px; color: var(--accent); margin-top: 4px; }
   .mc-done-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--surface3); background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); font-size: 14px; flex-shrink: 0; }
   .mc-done-btn.done { background: var(--green); border-color: var(--green); color: #fff; }
@@ -761,18 +761,69 @@ function renderAttachPreview(){
   }).join('');
 }
 
+let currentMediaAttach = null;
+
 function openAttach(id){
   const a = currentAttachments.find(x=>x.id===id);
   if(!a) return;
-  if(a.type==='link'){ window.open(a.data,'_blank'); return; }
-  const w = window.open('','_blank');
-  if(a.type&&a.type.startsWith('image/')){
-    w.document.write('<img src="'+a.data+'" style="max-width:100%">');
+  showMediaModal(a);
+}
+
+function showMediaModal(a){
+  currentMediaAttach = a;
+  const modal = document.getElementById('mediaModal');
+  const content = document.getElementById('mediaContent');
+  const linkBox = document.getElementById('mediaLinkBox');
+  document.getElementById('mediaFileName').textContent = a.name.length>30?a.name.slice(0,30)+'...':a.name;
+  content.innerHTML='';
+  linkBox.style.display='none';
+  if(a.type==='link'){
+    content.innerHTML='<div style="font-size:60px">🔗</div>';
+    document.getElementById('mediaLinkText').textContent=a.data;
+    linkBox.style.display='block';
+  } else if(a.type&&a.type.startsWith('image/')){
+    content.innerHTML='<img src="'+a.data+'" style="max-width:100%;max-height:70vh;border-radius:8px;object-fit:contain">';
   } else if(a.type&&a.type.startsWith('video/')){
-    w.document.write('<video src="'+a.data+'" controls style="max-width:100%"></video>');
+    content.innerHTML='<video src="'+a.data+'" controls style="max-width:100%;max-height:70vh;border-radius:8px"></video>';
   } else {
-    const link = w.document.createElement('a');
-    link.href = a.data; link.download = a.name; link.click(); w.close();
+    content.innerHTML='<div style="text-align:center"><div style="font-size:60px">📄</div><div style="color:#fff;margin-top:12px;font-size:15px">'+a.name+'</div></div>';
+  }
+  modal.style.display='flex';
+  document.body.style.overflow='hidden';
+}
+
+function closeMediaModal(){
+  document.getElementById('mediaModal').style.display='none';
+  document.getElementById('mediaContent').innerHTML='';
+  document.body.style.overflow='';
+  currentMediaAttach=null;
+}
+
+function openMediaLink(){
+  if(currentMediaAttach) window.open(currentMediaAttach.data,'_blank');
+}
+
+async function shareMedia(){
+  if(!currentMediaAttach) return;
+  const a = currentMediaAttach;
+  if(a.type==='link'){
+    if(navigator.share){ await navigator.share({url:a.data}); }
+    else { navigator.clipboard.writeText(a.data); alert('Посилання скопійовано!'); }
+    return;
+  }
+  try {
+    const res = await fetch(a.data);
+    const blob = await res.blob();
+    const file = new File([blob], a.name, {type:a.type});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+    } else {
+      const link = document.createElement('a');
+      link.href=a.data; link.download=a.name; link.click();
+    }
+  } catch(e) {
+    const link = document.createElement('a');
+    link.href=a.data; link.download=a.name; link.click();
   }
 }
 
@@ -781,14 +832,7 @@ function openAttachById(mid, aid){
   if(!m||!m.attachments) return;
   const a = m.attachments.find(x=>x.id===aid);
   if(!a) return;
-  if(a.type==='link'){ window.open(a.data,'_blank'); return; }
-  const w = window.open('','_blank');
-  if(a.type&&a.type.startsWith('image/')){
-    w.document.write('<img src="'+a.data+'" style="max-width:100%">');
-  } else {
-    const link = w.document.createElement('a');
-    link.href=a.data; link.download=a.name; link.click(); w.close();
-  }
+  showMediaModal(a);
 }
 
 function exportData(){const blob=new Blob([JSON.stringify({meetings,reminders},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crm_backup.json';a.click();}
@@ -803,5 +847,19 @@ function init(){
 }
 init();
 </script>
+
+<!-- MEDIA MODAL -->
+<div id="mediaModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:400;flex-direction:column;align-items:center;justify-content:center">
+  <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;padding-top:calc(16px + env(safe-area-inset-top))">
+    <button onclick="closeMediaModal()" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:15px;font-weight:600;padding:8px 16px;border-radius:20px;cursor:pointer">← Назад</button>
+    <div id="mediaFileName" style="color:rgba(255,255,255,.7);font-size:13px;flex:1;text-align:center;padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+    <button onclick="shareMedia()" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:15px;font-weight:600;padding:8px 16px;border-radius:20px;cursor:pointer">Передати ↗</button>
+  </div>
+  <div id="mediaContent" style="max-width:100%;max-height:80vh;display:flex;align-items:center;justify-content:center;padding:60px 16px 80px"></div>
+  <div id="mediaLinkBox" style="display:none;position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));left:16px;right:16px">
+    <div style="background:rgba(255,255,255,.1);border-radius:12px;padding:14px;word-break:break-all;color:#fff;font-size:14px" id="mediaLinkText"></div>
+    <button onclick="openMediaLink()" style="margin-top:10px;width:100%;background:var(--accent);border:none;border-radius:10px;padding:12px;color:#000;font-size:15px;font-weight:700;cursor:pointer">Відкрити посилання ↗</button>
+  </div>
+</div>
 </body>
 </html>
