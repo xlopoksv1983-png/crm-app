@@ -3,9 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0D0D0D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Євро Авто">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Євро Авто Ніжин</title>
 <style>
 :root {
@@ -1165,6 +1169,50 @@ async function deletePart() {
   showToast('🗑 Перенесено в кошик');
 }
 
+// ── AUTO-REFRESH (реальний час) ──
+var refreshTimer = null;
+
+function isEditingNow() {
+  return document.getElementById('modalOverlay').classList.contains('open') ||
+         document.getElementById('partModalOverlay').classList.contains('open');
+}
+
+async function silentRefresh() {
+  if (!API_URL) return;
+  if (document.hidden) return;
+  if (isEditingNow()) return;
+  try {
+    var carData = await apiCall({ action: 'getCars' });
+    if (carData && carData.cars) {
+      cars = carData.cars;
+      localStorage.setItem('euroauto_cars', JSON.stringify(cars));
+    }
+    var partData = await apiCall({ action: 'getParts' });
+    if (partData && partData.parts) {
+      parts = partData.parts;
+      localStorage.setItem('euroauto_parts', JSON.stringify(parts));
+    }
+  } catch(e) { return; }
+
+  renderCars(); renderStatusTabs(); renderParts();
+  if (document.getElementById('screen-stats').classList.contains('active')) renderStats();
+  if (document.getElementById('screen-workers').classList.contains('active')) renderWorkersScreen();
+  if (document.getElementById('trashView').style.display === 'block') renderTrash();
+  if (document.getElementById('detailView').style.display === 'block' && currentCarId) {
+    var stillExists = cars.find(function(c){ return c.id == currentCarId; });
+    if (stillExists) openDetail(currentCarId); else closeDetail();
+  }
+}
+
+function startAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(silentRefresh, 25000);
+}
+
+document.addEventListener('visibilitychange', function(){
+  if (!document.hidden) silentRefresh();
+});
+
 // ── INIT ──
 function init() {
   renderStatusTabs();
@@ -1172,6 +1220,7 @@ function init() {
   loadParts();
   updateWorkerSelects();
   updateManagerUI();
+  startAutoRefresh();
 }
 init();
 </script>
