@@ -150,7 +150,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div class="header">
     <h1>Євро<span>Авто</span></h1>
     <div style="display:flex;gap:8px;align-items:center">
-      <button onclick="openTrash()" style="position:relative;background:var(--surface2);border:none;border-radius:var(--radius-sm);width:38px;height:38px;color:var(--text-dim);font-size:16px;cursor:pointer">🗑<span id="trashBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px"></span></button>
+      <button id="trashBtn" onclick="openTrash()" style="display:none;position:relative;background:var(--surface2);border:none;border-radius:var(--radius-sm);width:38px;height:38px;color:var(--text-dim);font-size:16px;cursor:pointer">🗑<span id="trashBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px"></span></button>
       <button class="btn-accent" onclick="openAddModal()">+ Авто</button>
     </div>
   </div>
@@ -168,6 +168,17 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <div class="screen" id="screen-workers">
   <div class="header"><h1 id="workersScreenTitle">Праців<span>ники</span></h1></div>
   <div id="workersScreenBody"></div>
+</div>
+
+<div class="screen" id="screen-parts">
+  <div class="header">
+    <h1>Запчас<span>тини</span></h1>
+    <button class="btn-accent" onclick="openAddPartModal()">+ Деталь</button>
+  </div>
+  <div style="padding:0 16px 12px">
+    <input class="form-input" id="partSearch" placeholder="🔍 Пошук по назві..." oninput="renderParts()">
+  </div>
+  <div id="partsList" style="padding:0 16px 16px"></div>
 </div>
 
 <!-- DETAIL VIEW -->
@@ -194,7 +205,14 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <!-- NAV -->
 <div class="screen" id="screen-settings">
   <div class="header"><h1>Налаш<span>тування</span></h1></div>
-  
+
+  <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px">
+    <div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">🙋 Хто ви?</div>
+    <select class="form-input" id="userSelect" style="margin-bottom:8px"></select>
+    <button class="btn-accent" onclick="setCurrentUser()" style="width:100%;border:none;border-radius:var(--radius-sm);padding:12px;font-weight:700;cursor:pointer">Зберегти</button>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Кошик і видалення бачить лише «Керівник»</div>
+  </div>
+
   <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px">
     <div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">👥 Імена працівників</div>
     <div id="workersList"></div>
@@ -217,6 +235,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <button class="nav-btn" onclick="showScreen('stats',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
     Статистика
+  </button>
+  <button class="nav-btn" onclick="showScreen('parts',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+    Запчастини
   </button>
   <button class="nav-btn" onclick="showScreen('workers',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -335,6 +357,37 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 </div>
 </div>
 
+<!-- ADD/EDIT PART MODAL -->
+<div class="modal-overlay" id="partModalOverlay" onclick="closePartModalBg(event)">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <h2 id="partModalTitle">Нова деталь</h2>
+
+  <div class="form-group">
+    <label class="form-label">📸 Фото</label>
+    <div class="photo-grid" id="partPhotoGrid">
+      <div class="photo-add" onclick="document.getElementById('partPhotoInput').click()">+</div>
+    </div>
+    <input type="file" id="partPhotoInput" multiple accept="image/*" capture="environment" style="display:none" onchange="handlePartPhotos(this.files)">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Назва</label>
+    <input class="form-input" id="pName" placeholder="Напр. Гальмівні колодки">
+  </div>
+  <div class="form-group">
+    <label class="form-label">Залишок (шт.)</label>
+    <input class="form-input" id="pQty" type="number" placeholder="0">
+  </div>
+
+  <div class="form-actions">
+    <button class="btn-cancel" onclick="closePartModal()">Скасувати</button>
+    <button class="btn-save" onclick="savePart()">Зберегти</button>
+  </div>
+  <button class="btn-delete" id="btnDeletePart" style="display:none" onclick="deletePart()">Видалити деталь</button>
+</div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -351,11 +404,15 @@ window.addEventListener('unhandledrejection', function(e) {
 // ── CONFIG ──
 let API_URL = localStorage.getItem('euroauto_api') || '';
 let workers = JSON.parse(localStorage.getItem('euroauto_workers') || '["Керівник","Майстер 1","Майстер 2","Майстер 3","Майстер 4"]');
+let currentUser = localStorage.getItem('euroauto_user') || '';
 
 const STATUSES = ['Всі','Щойно куплено','Діагностика','Хімчистка','Кузовний ремонт','Фарбування','Механічний ремонт','Готовий до продажу','Продано'];
 const STATUS_CLASS = {'Щойно куплено':'s-new','Діагностика':'s-diag','Хімчистка':'s-chem','Кузовний ремонт':'s-body','Фарбування':'s-paint','Механічний ремонт':'s-mech','Готовий до продажу':'s-ready','Продано':'s-sold'};
 
 let cars = [];
+let parts = [];
+let editPartId = null;
+let currentPartPhotos = [];
 let currentFilter = 'Всі';
 let editId = null;
 let currentPhotos = [];
@@ -449,7 +506,8 @@ function showScreen(id, btn) {
   btn.classList.add('active');
   if (id === 'stats') { statsFilter = null; renderStats(); }
   if (id === 'workers') { workerFilter = null; renderWorkersScreen(); }
-  if (id === 'settings') { renderWorkersList(); var el=document.getElementById('apiUrlInput'); if(el) el.value=API_URL||''; }
+  if (id === 'parts') { renderParts(); }
+  if (id === 'settings') { renderWorkersList(); var el=document.getElementById('apiUrlInput'); if(el) el.value=API_URL||''; renderUserSelect(); }
 }
 
 // ── STATUS TABS ──
@@ -469,8 +527,8 @@ function renderStatusTabs() {
 function renderTrashBadge() {
   var badge = document.getElementById('trashBadge');
   if (!badge) return;
-  var n = cars.filter(function(c){ return c.trashed; }).length;
-  badge.style.display = n ? 'block' : 'none';
+  var n = cars.filter(function(c){ return c.trashed; }).length + parts.filter(function(p){ return p.trashed; }).length;
+  badge.style.display = (n && isManager()) ? 'block' : 'none';
   badge.textContent = n;
 }
 
@@ -749,15 +807,16 @@ async function saveCar() {
 async function deleteCar() {
   if (!editId || !confirm('Перемістити авто в кошик?')) return;
   var idx = cars.findIndex(function(c){ return c.id == editId; });
-  if (idx>=0) { cars[idx].trashed = true; cars[idx].trashedAt = new Date().toISOString(); }
+  if (idx>=0) { cars[idx].trashed = true; cars[idx].trashedAt = new Date().toISOString(); cars[idx].trashedBy = currentUser || 'Невідомо'; }
   saveLocal();
-  if (API_URL) await apiCall({action:'updateCar', id:editId, trashed:'true', trashedAt: cars[idx] ? cars[idx].trashedAt : ''});
+  if (API_URL) await apiCall({action:'updateCar', id:editId, trashed:'true', trashedAt: cars[idx] ? cars[idx].trashedAt : '', trashedBy: currentUser || 'Невідомо'});
   closeModal(); renderCars(); renderStatusTabs();
   showToast('🗑 Перенесено в кошик');
 }
 
 // ── TRASH ──
 function openTrash() {
+  if (!isManager()) { alert('🔒 Кошик доступний лише керівнику'); return; }
   document.getElementById('trashView').style.display = 'block';
   renderTrash();
 }
@@ -767,20 +826,35 @@ function closeTrash() {
 }
 
 function renderTrash() {
+  if (!isManager()) { closeTrash(); return; }
   var el = document.getElementById('trashBody');
-  var trashed = cars.filter(function(c){ return c.trashed; });
-  if (!trashed.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🗑</div>Кошик порожній</div>'; renderTrashBadge(); return; }
-  el.innerHTML = trashed.map(function(car){
-    return '<div class="car-card" style="margin-bottom:8px"><div style="padding:14px"><div style="font-size:15px;font-weight:700">'+(car.make||'')+' '+(car.model||'')+' '+(car.year||'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">'+(car.plate||'—')+'</div><div style="display:flex;gap:8px;margin-top:12px"><button onclick="restoreCar(\''+car.id+'\')" style="flex:1;background:var(--surface2);border:none;border-radius:var(--radius-sm);padding:10px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer">↩ Відновити</button><button onclick="permanentlyDeleteCar(\''+car.id+'\')" style="flex:1;background:rgba(224,85,85,.15);border:1.5px solid var(--red);border-radius:var(--radius-sm);padding:10px;color:var(--red);font-size:13px;font-weight:600;cursor:pointer">Видалити назавжди</button></div></div></div>';
-  }).join('');
+  var trashedCars = cars.filter(function(c){ return c.trashed; });
+  var trashedParts = parts.filter(function(p){ return p.trashed; });
+  if (!trashedCars.length && !trashedParts.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🗑</div>Кошик порожній</div>'; renderTrashBadge(); return; }
+  var html = '';
+  if (trashedCars.length) {
+    html += '<div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:8px 0">Авто</div>';
+    html += trashedCars.map(function(car){
+      return '<div class="car-card" style="margin-bottom:8px"><div style="padding:14px"><div style="font-size:15px;font-weight:700">'+(car.make||'')+' '+(car.model||'')+' '+(car.year||'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">'+(car.plate||'—')+'</div><div style="font-size:12px;color:var(--orange);margin-top:4px">🗑 Видалив: '+(car.trashedBy||'Невідомо')+'</div><div style="display:flex;gap:8px;margin-top:12px"><button onclick="restoreCar(\''+car.id+'\')" style="flex:1;background:var(--surface2);border:none;border-radius:var(--radius-sm);padding:10px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer">↩ Відновити</button><button onclick="permanentlyDeleteCar(\''+car.id+'\')" style="flex:1;background:rgba(224,85,85,.15);border:1.5px solid var(--red);border-radius:var(--radius-sm);padding:10px;color:var(--red);font-size:13px;font-weight:600;cursor:pointer">Видалити назавжди</button></div></div></div>';
+    }).join('');
+  }
+  if (trashedParts.length) {
+    html += '<div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">Запчастини</div>';
+    html += trashedParts.map(function(p){
+      return '<div class="car-card" style="margin-bottom:8px"><div style="padding:14px"><div style="font-size:15px;font-weight:700">'+(p.name||'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">Залишок: '+(p.qty||0)+' шт.</div><div style="font-size:12px;color:var(--orange);margin-top:4px">🗑 Видалив: '+(p.trashedBy||'Невідомо')+'</div><div style="display:flex;gap:8px;margin-top:12px"><button onclick="restorePart(\''+p.id+'\')" style="flex:1;background:var(--surface2);border:none;border-radius:var(--radius-sm);padding:10px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer">↩ Відновити</button><button onclick="permanentlyDeletePart(\''+p.id+'\')" style="flex:1;background:rgba(224,85,85,.15);border:1.5px solid var(--red);border-radius:var(--radius-sm);padding:10px;color:var(--red);font-size:13px;font-weight:600;cursor:pointer">Видалити назавжди</button></div></div></div>';
+    }).join('');
+  }
+  el.innerHTML = html;
   renderTrashBadge();
 }
 
 async function restoreCar(id) {
+  if (!isManager()) return;
   var idx = cars.findIndex(function(c){ return c.id == id; });
   if (idx<0) return;
   delete cars[idx].trashed;
   delete cars[idx].trashedAt;
+  delete cars[idx].trashedBy;
   saveLocal();
   if (API_URL) await apiCall({action:'updateCar', id:id, trashed:'false'});
   renderTrash(); renderCars(); renderStatusTabs();
@@ -788,11 +862,35 @@ async function restoreCar(id) {
 }
 
 async function permanentlyDeleteCar(id) {
+  if (!isManager()) return;
   if (!confirm('Видалити авто назавжди? Це не можна скасувати.')) return;
   cars = cars.filter(function(c){ return c.id != id; });
   saveLocal();
   if (API_URL) await apiCall({action:'deleteCar', id:id});
   renderTrash(); renderCars(); renderStatusTabs();
+  showToast('🗑 Видалено назавжди');
+}
+
+async function restorePart(id) {
+  if (!isManager()) return;
+  var idx = parts.findIndex(function(p){ return p.id == id; });
+  if (idx<0) return;
+  delete parts[idx].trashed;
+  delete parts[idx].trashedAt;
+  delete parts[idx].trashedBy;
+  saveLocalParts();
+  if (API_URL) await apiCall({action:'updatePart', id:id, trashed:'false'});
+  renderTrash(); renderParts();
+  showToast('↩ Деталь відновлено');
+}
+
+async function permanentlyDeletePart(id) {
+  if (!isManager()) return;
+  if (!confirm('Видалити деталь назавжди? Це не можна скасувати.')) return;
+  parts = parts.filter(function(p){ return p.id != id; });
+  saveLocalParts();
+  if (API_URL) await apiCall({action:'deletePart', id:id});
+  renderTrash(); renderParts();
   showToast('🗑 Видалено назавжди');
 }
 
@@ -920,11 +1018,160 @@ function showToast(msg) {
   setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
 
+// ── CURRENT USER / ROLE ──
+function isManager() { return currentUser === 'Керівник'; }
+
+function renderUserSelect() {
+  var sel = document.getElementById('userSelect');
+  if (!sel) return;
+  sel.innerHTML = workers.map(function(w){ return '<option value="'+w+'">'+w+'</option>'; }).join('');
+  sel.value = currentUser || workers[0] || '';
+}
+
+function setCurrentUser() {
+  var sel = document.getElementById('userSelect');
+  currentUser = sel.value;
+  localStorage.setItem('euroauto_user', currentUser);
+  updateManagerUI();
+  showToast('✅ Збережено: ' + currentUser);
+}
+
+function updateManagerUI() {
+  var btn = document.getElementById('trashBtn');
+  if (btn) btn.style.display = isManager() ? 'flex' : 'none';
+}
+
+// ── PARTS ──
+function saveLocalParts() {
+  try {
+    localStorage.setItem('euroauto_parts', JSON.stringify(parts));
+  } catch(e) {
+    try {
+      var lite = parts.map(function(p){ return Object.assign({}, p, {photos:(p.photos||[]).slice(0,1)}); });
+      localStorage.setItem('euroauto_parts', JSON.stringify(lite));
+    } catch(e2) {}
+  }
+}
+
+function activeParts() { return parts.filter(function(p){ return !p.trashed; }); }
+
+async function loadParts() {
+  if (API_URL) {
+    var data = await apiCall({ action: 'getParts' });
+    if (data && data.parts) {
+      parts = data.parts;
+      localStorage.setItem('euroauto_parts', JSON.stringify(parts));
+    } else {
+      parts = JSON.parse(localStorage.getItem('euroauto_parts') || '[]');
+    }
+  } else {
+    parts = JSON.parse(localStorage.getItem('euroauto_parts') || '[]');
+  }
+  renderParts();
+}
+
+function renderParts() {
+  var el = document.getElementById('partsList');
+  if (!el) return;
+  var q = (document.getElementById('partSearch') && document.getElementById('partSearch').value || '').trim().toLowerCase();
+  var list = activeParts();
+  if (q) list = list.filter(function(p){ return (p.name||'').toLowerCase().indexOf(q) !== -1; });
+  if (!list.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🔩</div>Запчастин не знайдено</div>'; return; }
+  el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' + list.map(function(p){
+    var photos = Array.isArray(p.photos) ? p.photos : [];
+    var photoHtml = photos.length ? '<img src="'+photos[0]+'" style="width:100%;height:100%;object-fit:cover">' : '🔩';
+    return '<div class="car-card" onclick="openEditPartModal(\''+p.id+'\')" style="cursor:pointer"><div style="aspect-ratio:1;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;border-radius:var(--radius) var(--radius) 0 0">'+photoHtml+'</div><div style="padding:10px"><div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.name||'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">Залишок: '+(p.qty||0)+' шт.</div></div></div>';
+  }).join('') + '</div>';
+}
+
+function openAddPartModal() {
+  editPartId = null; currentPartPhotos = [];
+  document.getElementById('partModalTitle').textContent = 'Нова деталь';
+  document.getElementById('pName').value = '';
+  document.getElementById('pQty').value = '';
+  document.getElementById('btnDeletePart').style.display = 'none';
+  renderPartPhotoGrid();
+  document.getElementById('partModalOverlay').classList.add('open');
+}
+
+function openEditPartModal(id) {
+  var p = parts.find(function(x){ return x.id === id; });
+  if (!p) return;
+  editPartId = id; currentPartPhotos = Array.isArray(p.photos) ? p.photos.slice() : [];
+  document.getElementById('partModalTitle').textContent = 'Редагувати деталь';
+  document.getElementById('pName').value = p.name || '';
+  document.getElementById('pQty').value = p.qty || '';
+  document.getElementById('btnDeletePart').style.display = 'block';
+  renderPartPhotoGrid();
+  document.getElementById('partModalOverlay').classList.add('open');
+}
+
+function closePartModal() { document.getElementById('partModalOverlay').classList.remove('open'); }
+function closePartModalBg(e) { if (e.target === document.getElementById('partModalOverlay')) closePartModal(); }
+
+function handlePartPhotos(files) {
+  Array.from(files).forEach(function(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      compressImage(e.target.result, 1000, 0.6).then(function(compressed){
+        currentPartPhotos.push(compressed);
+        renderPartPhotoGrid();
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('partPhotoInput').value = '';
+}
+
+function renderPartPhotoGrid() {
+  document.getElementById('partPhotoGrid').innerHTML =
+    currentPartPhotos.map(function(p,i){ return '<div class="photo-thumb" onclick="removePartPhoto('+i+')"><img src="'+p+'"><div style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:12px">✕</div></div>'; }).join('') +
+    '<div class="photo-add" onclick="document.getElementById(\'partPhotoInput\').click()">+</div>';
+}
+
+function removePartPhoto(i) { currentPartPhotos.splice(i,1); renderPartPhotoGrid(); }
+
+async function savePart() {
+ try {
+  var name = document.getElementById('pName').value.trim();
+  if (!name) { showToast('Вкажи назву деталі'); return; }
+  var partData = { name: name, qty: document.getElementById('pQty').value || 0, photos: currentPartPhotos };
+  if (editPartId) {
+    var idx = parts.findIndex(function(p){ return p.id === editPartId; });
+    if (idx>=0) parts[idx] = Object.assign({}, parts[idx], partData);
+    saveLocalParts();
+    if (API_URL) await apiCall(Object.assign({action:'updatePart', id:editPartId}, partData, {photos:JSON.stringify(partData.photos)}));
+    showToast('✅ Деталь оновлено');
+  } else {
+    var newPart = Object.assign({}, partData, {id:'p'+Date.now().toString(), created:new Date().toISOString()});
+    parts.unshift(newPart);
+    saveLocalParts();
+    if (API_URL) await apiCall(Object.assign({action:'addPart'}, partData, {photos:JSON.stringify(partData.photos)}));
+    showToast('✅ Деталь додано');
+  }
+  closePartModal(); renderParts();
+ } catch(err) {
+  alert('⚠️ Помилка при збереженні деталі: ' + (err && err.message ? err.message : err));
+ }
+}
+
+async function deletePart() {
+  if (!editPartId || !confirm('Перемістити деталь в кошик?')) return;
+  var idx = parts.findIndex(function(p){ return p.id === editPartId; });
+  if (idx>=0) { parts[idx].trashed = true; parts[idx].trashedAt = new Date().toISOString(); parts[idx].trashedBy = currentUser || 'Невідомо'; }
+  saveLocalParts();
+  if (API_URL) await apiCall({action:'updatePart', id:editPartId, trashed:'true', trashedBy: currentUser || 'Невідомо'});
+  closePartModal(); renderParts();
+  showToast('🗑 Перенесено в кошик');
+}
+
 // ── INIT ──
 function init() {
   renderStatusTabs();
   loadCars();
+  loadParts();
   updateWorkerSelects();
+  updateManagerUI();
 }
 init();
 </script>
