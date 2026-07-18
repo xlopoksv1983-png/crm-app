@@ -57,6 +57,8 @@
   .badge-cool { background: rgba(74,144,217,.2); color: var(--blue); }
   .badge-done { background: rgba(76,175,80,.2); color: var(--green); }
   .badge-vip { background: rgba(155,89,182,.2); color: var(--purple); }
+  .mc-note { font-size: 13px; color: var(--text-dim); margin-top: 4px; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+  .mc-attach { font-size: 12px; color: var(--accent); margin-top: 4px; }
   .mc-done-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--surface3); background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); font-size: 14px; flex-shrink: 0; }
   .mc-done-btn.done { background: var(--green); border-color: var(--green); color: #fff; }
 
@@ -322,7 +324,7 @@
         <div class="remind-block" id="rb-none"><div style="font-size:13px;color:var(--text-muted);padding:8px 0">Нагадування вимкнено</div></div>
       </div>
     </div>
-    <div class="form-group"><label class="form-label">Нотатка</label><input class="form-input" id="fNote" placeholder="Додаткова інформація..."></div>
+    <div class="form-group"><label class="form-label">Нотатка</label><textarea class="form-input" id="fNote" placeholder="Додаткова інформація..." rows="4" style="resize:vertical;min-height:80px;line-height:1.5"></textarea></div><div class="form-group"><label class="form-label">Вкладення</label><div id="attachPreview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" onclick="document.getElementById('fileInput').click()" style="flex:1;background:var(--surface2);border:1.5px dashed var(--surface3);border-radius:var(--radius-sm);padding:10px;color:var(--text-dim);font-size:13px;cursor:pointer">📎 Фото / Відео / Файл</button><button type="button" onclick="addLink()" style="flex:1;background:var(--surface2);border:1.5px dashed var(--surface3);border-radius:var(--radius-sm);padding:10px;color:var(--text-dim);font-size:13px;cursor:pointer">🔗 Посилання</button></div><input type="file" id="fileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx" style="display:none" onchange="handleFiles(this.files)"></div>
     <div class="form-actions">
       <button class="btn-cancel" onclick="closeModalDirect()">Скасувати</button>
       <button class="btn-save" onclick="saveMeeting()">Зберегти</button>
@@ -507,7 +509,9 @@ function renderDayMeetings(){
       <div class="mc-time">${m.time}</div>
       <div class="mc-info">
         <div class="mc-name">${m.client}</div>
-        <div class="mc-sub">${m.topic||''}${m.note?' · '+m.note:''}</div>
+        <div class="mc-sub">${m.topic||''}</div>
+        ${m.note?'<div class="mc-note">'+m.note.replace(/\n/g,'<br>')+'</div>':''}
+        ${m.attachments&&m.attachments.length?'<div class="mc-attach">📎 '+m.attachments.length+' вкладень</div>':''}
       </div>
       <span class="mc-badge badge-${m.priority}">${priorityLabels[m.priority]||''}</span>
       <button class="mc-done-btn ${m.done?'done':''}" onclick="toggleDone('${m.id}',event)">✓</button>
@@ -527,6 +531,8 @@ function openAddModal(){
   document.getElementById('fTopic').value='';
   document.getElementById('fNote').value='';
   document.getElementById('btnDelete').style.display='none';
+  currentAttachments=[];
+  renderAttachPreview();
   selectPriorityByKey('hot');
   setRemindType('before',document.querySelector('.rtt-btn'));
   document.getElementById('remindAmount').value=30;
@@ -545,6 +551,8 @@ function openEditModal(id){
   document.getElementById('fTopic').value=m.topic||'';
   document.getElementById('fNote').value=m.note||'';
   document.getElementById('btnDelete').style.display='block';
+  currentAttachments=m.attachments?[...m.attachments]:[];
+  renderAttachPreview();
   selectPriorityByKey(m.priority);
   const rt=m.remind?.type||'none';
   const btns=document.querySelectorAll('.rtt-btn');
@@ -569,7 +577,7 @@ async function saveMeeting(){
   let remind={type:'none'};
   if(remindType==='before') remind={type:'before',amount:parseInt(document.getElementById('remindAmount').value)||30,unit:remindUnit};
   else if(remindType==='exact') remind={type:'exact',date:document.getElementById('remindDate').value,time:document.getElementById('remindTime').value};
-  const obj={id:editId||Date.now().toString(),client,phone:document.getElementById('fPhone').value.trim(),date,time,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value,priority:selectedPriority,remind,done:editId?(meetings.find(x=>x.id===editId)?.done||false):false,created:new Date().toISOString()};
+  const obj={id:editId||Date.now().toString(),client,phone:document.getElementById('fPhone').value.trim(),date,time,topic:document.getElementById('fTopic').value,note:document.getElementById('fNote').value,priority:selectedPriority,remind,attachments:[...currentAttachments],done:editId?(meetings.find(x=>x.id===editId)?.done||false):false,created:new Date().toISOString()};
   if(editId){meetings[meetings.findIndex(x=>x.id===editId)]=obj;}else meetings.push(obj);
   save();closeModalDirect();renderCalendar();scheduleReminders();
   const rs=remind.type==='before'?`за ${remind.amount} ${remind.unit}`:remind.type==='exact'?`${remind.date} о ${remind.time}`:'без нагадування';
@@ -707,6 +715,80 @@ function renderClients(){
       </div>
       <div class="client-count">${data.count} зустр.</div>
     </div>`).join('');
+}
+
+
+// ── ATTACHMENTS ──
+let currentAttachments = [];
+
+function handleFiles(files){
+  Array.from(files).forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      const att = {id:Date.now().toString()+Math.random(), name:file.name, type:file.type, size:file.size, data:e.target.result};
+      currentAttachments.push(att);
+      renderAttachPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('fileInput').value='';
+}
+
+function addLink(){
+  const url = prompt('Вставте посилання:');
+  if(!url) return;
+  const att = {id:Date.now().toString(), name:url, type:'link', data:url};
+  currentAttachments.push(att);
+  renderAttachPreview();
+}
+
+function removeAttach(id){
+  currentAttachments = currentAttachments.filter(a=>a.id!==id);
+  renderAttachPreview();
+}
+
+function renderAttachPreview(){
+  const el = document.getElementById('attachPreview');
+  if(!el) return;
+  el.innerHTML = currentAttachments.map(a=>{
+    const isImg = a.type&&a.type.startsWith('image/');
+    const isVid = a.type&&a.type.startsWith('video/');
+    const isLink = a.type==='link';
+    return `<div style="position:relative;background:var(--surface2);border:1px solid var(--surface3);border-radius:var(--radius-sm);padding:6px 28px 6px 8px;font-size:12px;color:var(--text-dim);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" onclick="openAttach('${a.id}')">
+      ${isImg?'🖼 ':isVid?'🎬 ':isLink?'🔗 ':'📄 '}${a.name.length>20?a.name.slice(0,20)+'...':a.name}
+      <button onclick="event.stopPropagation();removeAttach('${a.id}')" style="position:absolute;top:2px;right:4px;background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function openAttach(id){
+  const a = currentAttachments.find(x=>x.id===id);
+  if(!a) return;
+  if(a.type==='link'){ window.open(a.data,'_blank'); return; }
+  const w = window.open('','_blank');
+  if(a.type&&a.type.startsWith('image/')){
+    w.document.write('<img src="'+a.data+'" style="max-width:100%">');
+  } else if(a.type&&a.type.startsWith('video/')){
+    w.document.write('<video src="'+a.data+'" controls style="max-width:100%"></video>');
+  } else {
+    const link = w.document.createElement('a');
+    link.href = a.data; link.download = a.name; link.click(); w.close();
+  }
+}
+
+function openAttachById(mid, aid){
+  const m = meetings.find(x=>x.id===mid);
+  if(!m||!m.attachments) return;
+  const a = m.attachments.find(x=>x.id===aid);
+  if(!a) return;
+  if(a.type==='link'){ window.open(a.data,'_blank'); return; }
+  const w = window.open('','_blank');
+  if(a.type&&a.type.startsWith('image/')){
+    w.document.write('<img src="'+a.data+'" style="max-width:100%">');
+  } else {
+    const link = w.document.createElement('a');
+    link.href=a.data; link.download=a.name; link.click(); w.close();
+  }
 }
 
 function exportData(){const blob=new Blob([JSON.stringify({meetings,reminders},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crm_backup.json';a.click();}
