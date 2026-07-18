@@ -426,7 +426,20 @@ async function loadCars() {
   renderStatusTabs();
 }
 
-function saveLocal() { localStorage.setItem('euroauto_cars', JSON.stringify(cars)); }
+function saveLocal() {
+  try {
+    localStorage.setItem('euroauto_cars', JSON.stringify(cars));
+  } catch(e) {
+    console.warn('localStorage full, trying without photos', e);
+    try {
+      var lite = cars.map(function(c){ return Object.assign({}, c, {photos: (c.photos||[]).slice(0,1)}); });
+      localStorage.setItem('euroauto_cars', JSON.stringify(lite));
+      showToast('⚠️ Памʼять переповнена — залишено лише 1 фото на авто локально');
+    } catch(e2) {
+      showToast('⚠️ Немає місця для локального збереження. Дані надіслано на сервер, якщо є API-посилання.');
+    }
+  }
+}
 
 // ── NAVIGATION ──
 function showScreen(id, btn) {
@@ -635,10 +648,35 @@ function closeModalBg(e) { if (e.target === document.getElementById('modalOverla
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
 
 // ── PHOTOS ──
+function compressImage(dataUrl, maxDim, quality) {
+  return new Promise(function(resolve){
+    var img = new Image();
+    img.onload = function(){
+      var w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = function(){ resolve(dataUrl); };
+    img.src = dataUrl;
+  });
+}
+
 function handlePhotos(files) {
   Array.from(files).forEach(function(file){
     var reader = new FileReader();
-    reader.onload = function(e){ currentPhotos.push(e.target.result); renderPhotoGrid(); };
+    reader.onload = function(e){
+      compressImage(e.target.result, 1000, 0.6).then(function(compressed){
+        currentPhotos.push(compressed);
+        renderPhotoGrid();
+      });
+    };
     reader.readAsDataURL(file);
   });
   document.getElementById('photoInput').value = '';
