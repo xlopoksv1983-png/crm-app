@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Євро Авто">
+<title>Євро Авто Ніжин</title>
+<style>
+:root {
+  --bg:#0D0D0D; --surface:#1A1A1A; --surface2:#242424; --surface3:#2E2E2E;
+  --text:#F0EDE6; --text-dim:#888; --text-muted:#555;
+  --accent:#E8B84B; --btn:#E8B84B; --btn-text:#000;
+  --red:#E05555; --green:#4CAF50; --orange:#E07B30; --blue:#4A90D9;
+  --radius:14px; --radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;min-height:100vh}
+
+/* NAV */
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid #2a2a2a;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 2px 6px;gap:2px;font-size:9px;color:var(--text-muted);cursor:pointer;border:none;background:none}
+.nav-btn.active{color:var(--accent)}
+.nav-btn svg{width:22px;height:22px}
+
+.screen{display:none;padding:16px 16px 90px;min-height:100vh}
+.screen.active{display:block}
+
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-top:8px}
+.header h1{font-size:20px;font-weight:800;letter-spacing:-0.5px}
+.header h1 span{color:var(--accent)}
+.btn-accent{background:var(--btn);color:var(--btn-text);border:none;border-radius:var(--radius-sm);padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer}
+
+/* STATUS TABS */
+.status-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;scrollbar-width:none}
+.status-scroll::-webkit-scrollbar{display:none}
+.status-chip{white-space:nowrap;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;background:var(--surface2);color:var(--text-dim);border:1.5px solid transparent;flex-shrink:0}
+.status-chip.active{border-color:var(--accent);color:var(--accent);background:rgba(232,184,75,.1)}
+
+/* CAR CARD */
+.car-card{background:var(--surface);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;cursor:pointer}
+.car-photo{width:100%;height:180px;object-fit:cover;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:40px;color:var(--text-muted)}
+.car-photo img{width:100%;height:100%;object-fit:cover}
+.car-body{padding:14px}
+.car-title{font-size:17px;font-weight:700;margin-bottom:4px}
+.car-meta{font-size:12px;color:var(--text-dim);margin-bottom:10px}
+.car-status-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.status-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
+.days-badge{font-size:11px;color:var(--text-muted)}
+.tasks-mini{display:flex;gap:4px;flex-wrap:wrap}
+.task-dot{width:10px;height:10px;border-radius:50%;background:var(--surface3)}
+.task-dot.done{background:var(--green)}
+.task-dot.active{background:var(--accent)}
+
+/* STATUS COLORS */
+.s-new{background:rgba(74,144,217,.2);color:#4A90D9}
+.s-diag{background:rgba(155,89,182,.2);color:#9B59B6}
+.s-chem{background:rgba(232,184,75,.2);color:#E8B84B}
+.s-body{background:rgba(224,123,48,.2);color:#E07B30}
+.s-paint{background:rgba(224,85,85,.2);color:#E05555}
+.s-mech{background:rgba(52,152,219,.2);color:#3498DB}
+.s-ready{background:rgba(76,175,80,.2);color:#4CAF50}
+.s-sold{background:rgba(127,140,141,.2);color:#7F8C8D}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:flex-end}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-height:94vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--surface3);border-radius:2px;margin:0 auto 20px}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:20px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;color:var(--text-dim);font-weight:600;margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.5px}
+.form-input{width:100%;background:var(--surface2);border:1.5px solid var(--surface3);border-radius:var(--radius-sm);padding:11px 14px;color:var(--text);font-size:15px;outline:none;-webkit-appearance:none}
+.form-input:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-actions{display:flex;gap:10px;margin-top:20px}
+.btn-cancel{flex:1;background:var(--surface2);border:none;border-radius:var(--radius-sm);padding:14px;color:var(--text-dim);font-size:15px;font-weight:600;cursor:pointer}
+.btn-save{flex:2;background:var(--btn);border:none;border-radius:var(--radius-sm);padding:14px;color:var(--btn-text);font-size:15px;font-weight:700;cursor:pointer}
+.btn-delete{background:rgba(224,85,85,.15);border:1.5px solid var(--red);border-radius:var(--radius-sm);padding:14px;color:var(--red);font-size:15px;font-weight:600;cursor:pointer;margin-top:10px;width:100%}
+
+/* TASKS IN MODAL */
+.task-list{margin-top:8px}
+.task-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--surface3)}
+.task-check{width:24px;height:24px;border-radius:6px;border:2px solid var(--surface3);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:14px}
+.task-check.done{background:var(--green);border-color:var(--green);color:#fff}
+.task-text{flex:1;font-size:14px}
+.task-who{font-size:11px;color:var(--text-muted)}
+.task-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;padding:0 4px}
+.add-task-row{display:flex;gap:8px;margin-top:10px}
+.add-task-row input{flex:1}
+.add-task-row select{background:var(--surface2);border:1.5px solid var(--surface3);border-radius:var(--radius-sm);padding:8px 10px;color:var(--text);font-size:13px;outline:none;-webkit-appearance:none}
+
+/* PHOTOS */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.photo-thumb{aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;background:var(--surface2);position:relative;cursor:pointer}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-add{aspect-ratio:1;border-radius:var(--radius-sm);background:var(--surface2);border:2px dashed var(--surface3);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--text-muted);cursor:pointer}
+
+/* DETAIL VIEW */
+.detail-view{display:none;position:fixed;inset:0;background:var(--bg);z-index:150;overflow-y:auto}
+.detail-header{display:flex;align-items:center;gap:12px;padding:16px;padding-top:calc(16px + env(safe-area-inset-top));border-bottom:1px solid var(--surface2)}
+.detail-back{background:var(--surface2);border:none;color:var(--accent);font-size:15px;font-weight:600;padding:8px 14px;border-radius:20px;cursor:pointer}
+.detail-title{flex:1;font-size:17px;font-weight:700}
+.detail-edit{background:var(--btn);border:none;color:var(--btn-text);font-size:14px;font-weight:700;padding:8px 14px;border-radius:20px;cursor:pointer}
+.detail-photos{display:flex;gap:8px;overflow-x:auto;padding:12px 16px;scrollbar-width:none}
+.detail-photos::-webkit-scrollbar{display:none}
+.detail-photo{width:200px;height:150px;flex-shrink:0;border-radius:var(--radius-sm);overflow:hidden;background:var(--surface2)}
+.detail-photo img{width:100%;height:100%;object-fit:cover}
+.detail-body{padding:16px}
+.detail-section{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.detail-section-title{font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--surface2)}
+.detail-row:last-child{border-bottom:none}
+.detail-row-label{font-size:13px;color:var(--text-dim)}
+.detail-row-value{font-size:14px;font-weight:600;text-align:right}
+.detail-task{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--surface2)}
+.detail-task:last-child{border-bottom:none}
+.detail-task-check{width:26px;height:26px;border-radius:8px;border:2px solid var(--surface3);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:15px}
+.detail-task-check.done{background:var(--green);border-color:var(--green);color:#fff}
+.detail-task-info{flex:1}
+.detail-task-name{font-size:14px;font-weight:500}
+.detail-task-who{font-size:11px;color:var(--text-muted);margin-top:2px}
+.comment-box{background:var(--surface2);border-radius:var(--radius-sm);padding:12px;font-size:14px;color:var(--text-dim);line-height:1.5;min-height:60px;white-space:pre-wrap}
+
+/* PROGRESS BAR */
+.progress-bar{height:6px;background:var(--surface3);border-radius:3px;margin-top:8px;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .3s}
+
+/* SPINNER */
+.spinner{text-align:center;padding:40px;color:var(--text-muted);font-size:14px}
+.empty{text-align:center;padding:50px 20px;color:var(--text-muted);font-size:14px}
+.empty-icon{font-size:48px;margin-bottom:12px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:16px}
+.stat-val{font-size:28px;font-weight:800;color:var(--accent)}
+.stat-label{font-size:12px;color:var(--text-dim);margin-top:4px}
+
+/* TOAST */
+.toast{display:none;position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:16px;right:16px;background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:12px 16px;font-size:14px;font-weight:500;z-index:500;text-align:center}
+.toast.show{display:block}
+</style>
+</head>
+<body>
+
+<!-- SCREENS -->
+<div class="screen active" id="screen-cars">
+  <div class="header">
+    <h1>Євро<span>Авто</span></h1>
+    <button class="btn-accent" onclick="openAddModal()">+ Авто</button>
+  </div>
+  <div class="status-scroll" id="statusTabs"></div>
+  <div id="carsList"></div>
+</div>
+
+<div class="screen" id="screen-stats">
+  <div class="header"><h1>Стати<span>стика</span></h1></div>
+  <div class="stats-grid" id="statsGrid"></div>
+  <div id="statusBreakdown"></div>
+  <div id="statsCarsList"></div>
+</div>
+
+<div class="screen" id="screen-workers">
+  <div class="header"><h1 id="workersScreenTitle">Праців<span>ники</span></h1></div>
+  <div id="workersScreenBody"></div>
+</div>
+
+<!-- DETAIL VIEW -->
+<div class="detail-view" id="detailView">
+  <div class="detail-header">
+    <button class="detail-back" onclick="closeDetail()">← Назад</button>
+    <div class="detail-title" id="detailTitle"></div>
+    <button class="detail-edit" onclick="editCurrentCar()">Редагувати</button>
+  </div>
+  <div class="detail-photos" id="detailPhotos"></div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<!-- NAV -->
+<div class="screen" id="screen-settings">
+  <div class="header"><h1>Налаш<span>тування</span></h1></div>
+  
+  <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px">
+    <div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">👥 Імена працівників</div>
+    <div id="workersList"></div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:10px">Зміни збережуться автоматично</div>
+  </div>
+
+  <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px">
+    <div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">🔗 API Посилання</div>
+    <input class="form-input" id="apiUrlInput" placeholder="https://script.google.com/..." style="margin-bottom:8px">
+    <button class="btn-accent" onclick="saveApiUrl()" style="width:100%;border:none;border-radius:var(--radius-sm);padding:12px;font-weight:700;cursor:pointer">Зберегти посилання</button>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Посилання з Google Apps Script Web App</div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showScreen('cars',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+    Авто
+  </button>
+  <button class="nav-btn" onclick="showScreen('stats',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Статистика
+  </button>
+  <button class="nav-btn" onclick="showScreen('workers',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Люди
+  </button>
+  <button class="nav-btn" onclick="showScreen('settings',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    Налаштування
+  </button>
+</nav>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalBg(event)">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <h2 id="modalTitle">Нове авто</h2>
+
+  <div class="form-group">
+    <label class="form-label">📸 Фото</label>
+    <div class="photo-grid" id="photoGrid">
+      <div class="photo-add" onclick="document.getElementById('photoInput').click()">+</div>
+    </div>
+    <input type="file" id="photoInput" multiple accept="image/*" capture="environment" style="display:none" onchange="handlePhotos(this.files)">
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Марка</label>
+      <select class="form-input" id="fMake" onchange="onMakeChange()"></select>
+      <input class="form-input" id="fMakeCustom" placeholder="Введіть марку" style="display:none;margin-top:8px">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Модель</label>
+      <select class="form-input" id="fModel" onchange="onModelChange()"></select>
+      <input class="form-input" id="fModelCustom" placeholder="Введіть модель" style="display:none;margin-top:8px">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Рік</label>
+      <select class="form-input" id="fYear"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ціна купівлі</label>
+      <input class="form-input" id="fPrice" type="number" placeholder="15000">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Держномер</label>
+      <input class="form-input" id="fPlate" placeholder="АА1234ВВ">
+    </div>
+    <div class="form-group">
+      <label class="form-label">VIN</label>
+      <div style="display:flex;gap:6px">
+        <input class="form-input" id="fVin" placeholder="..." style="flex:1">
+        <button type="button" onclick="scanVin()" style="background:var(--surface2);border:1.5px solid var(--surface3);border-radius:var(--radius-sm);padding:8px 12px;color:var(--accent);font-size:18px;cursor:pointer" title="Сфоткати VIN">📷</button>
+      </div>
+      <input type="file" id="vinPhoto" accept="image/*" capture="environment" style="display:none" onchange="processVinPhoto(this)">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Статус</label>
+    <select class="form-input" id="fStatus">
+      <option>Щойно куплено</option>
+      <option>Діагностика</option>
+      <option>Хімчистка</option>
+      <option>Кузовний ремонт</option>
+      <option>Фарбування</option>
+      <option>Механічний ремонт</option>
+      <option>Готовий до продажу</option>
+      <option>Продано</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Відповідальний</label>
+    <select class="form-input" id="fResponsible">
+      <option value="">— Обрати —</option>
+      <option>Керівник</option>
+      <option>Майстер 1</option>
+      <option>Майстер 2</option>
+      <option>Майстер 3</option>
+      <option>Майстер 4</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Задачі</label>
+    <div class="task-list" id="taskList"></div>
+    <div class="add-task-row">
+      <input class="form-input" id="newTaskText" placeholder="Нова задача...">
+      <select id="newTaskWho">
+        <option value="">Хто</option>
+        <option>Керівник</option>
+        <option>Майстер 1</option>
+        <option>Майстер 2</option>
+        <option>Майстер 3</option>
+        <option>Майстер 4</option>
+      </select>
+      <button class="btn-accent" onclick="addTask()" style="padding:8px 14px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-weight:700">+</button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Коментар</label>
+    <textarea class="form-input" id="fComment" rows="3" style="resize:vertical" placeholder="Нотатки по авто..."></textarea>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn-cancel" onclick="closeModal()">Скасувати</button>
+    <button class="btn-save" onclick="saveCar()">Зберегти</button>
+  </div>
+  <button class="btn-delete" id="btnDelete" style="display:none" onclick="deleteCar()">Видалити авто</button>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──
+let API_URL = localStorage.getItem('euroauto_api') || '';
+let workers = JSON.parse(localStorage.getItem('euroauto_workers') || '["Керівник","Майстер 1","Майстер 2","Майстер 3","Майстер 4"]');
+
+const STATUSES = ['Всі','Щойно куплено','Діагностика','Хімчистка','Кузовний ремонт','Фарбування','Механічний ремонт','Готовий до продажу','Продано'];
+const STATUS_CLASS = {'Щойно куплено':'s-new','Діагностика':'s-diag','Хімчистка':'s-chem','Кузовний ремонт':'s-body','Фарбування':'s-paint','Механічний ремонт':'s-mech','Готовий до продажу':'s-ready','Продано':'s-sold'};
+
+let cars = [];
+let currentFilter = 'Всі';
+let editId = null;
+let currentPhotos = [];
+let currentTasks = [];
+let currentCarId = null;
+let statsFilter = null;
+let workerFilter = null;
+
+// ── CAR MAKES/MODELS (як на AUTO.RIA) ──
+const CAR_MAKES = {
+  "Audi": ["A3","A4","A5","A6","A7","A8","Q3","Q5","Q7","Q8"],
+  "BMW": ["1 Series","2 Series","3 Series","4 Series","5 Series","7 Series","X1","X3","X5","X6"],
+  "Chevrolet": ["Aveo","Cruze","Lacetti","Captiva","Niva","Tahoe"],
+  "Citroen": ["C3","C4","C5","Berlingo","Jumpy","Jumper"],
+  "Dacia": ["Duster","Logan","Sandero","Dokker"],
+  "Fiat": ["500","Punto","Tipo","Doblo","Ducato"],
+  "Ford": ["Fiesta","Focus","Mondeo","Kuga","EcoSport","Transit","S-Max","Galaxy"],
+  "Honda": ["Civic","Accord","CR-V","HR-V","Jazz"],
+  "Hyundai": ["Accent","Elantra","Sonata","Tucson","Santa Fe","i30","Getz"],
+  "Jeep": ["Cherokee","Grand Cherokee","Compass","Renegade"],
+  "Kia": ["Rio","Ceed","Sportage","Sorento","Optima","Picanto"],
+  "Lexus": ["ES","IS","RX","NX","GX"],
+  "Land Rover": ["Range Rover","Discovery","Defender","Freelander"],
+  "Mazda": ["2","3","6","CX-3","CX-5"],
+  "Mercedes-Benz": ["A-Class","C-Class","E-Class","S-Class","GLC","GLE","Vito","Sprinter"],
+  "MINI": ["Cooper","Countryman","Clubman"],
+  "Mitsubishi": ["Lancer","ASX","Outlander","Pajero"],
+  "Nissan": ["Micra","Juke","Qashqai","X-Trail","Almera","Leaf"],
+  "Opel": ["Astra","Corsa","Insignia","Vectra","Zafira","Combo","Vivaro"],
+  "Peugeot": ["208","308","508","2008","3008","Partner"],
+  "Porsche": ["Cayenne","Macan","Panamera","911"],
+  "Renault": ["Clio","Megane","Logan","Duster","Kangoo","Scenic","Sandero"],
+  "Seat": ["Ibiza","Leon","Ateca","Alhambra"],
+  "Skoda": ["Fabia","Octavia","Superb","Rapid","Kodiaq","Yeti"],
+  "Subaru": ["Forester","Outback","Impreza","XV"],
+  "Suzuki": ["Swift","Vitara","SX4","Jimny"],
+  "Toyota": ["Corolla","Camry","RAV4","Yaris","Avensis","Land Cruiser","C-HR","Prius","Highlander"],
+  "Volkswagen": ["Golf","Passat","Polo","Jetta","Tiguan","Touareg","Caddy","Transporter","Sharan"],
+  "Volvo": ["S60","V40","V60","XC60","XC90"],
+  "ВАЗ (Lada)": ["2107","2109","2110","2114","2115","Priora","Granta","Vesta","Niva"],
+  "ЗАЗ": ["Sens","Lanos","Slavuta","Chance"]
+};
+
+// ── API ──
+async function apiCall(params) {
+  if (!API_URL) return null;
+  try {
+    const url = API_URL + '?' + new URLSearchParams(params).toString();
+    const r = await fetch(url);
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+async function loadCars() {
+  document.getElementById('carsList').innerHTML = '<div class="spinner">⏳ Завантаження...</div>';
+  if (API_URL) {
+    const data = await apiCall({ action: 'getCars' });
+    if (data && data.cars) {
+      cars = data.cars;
+      localStorage.setItem('euroauto_cars', JSON.stringify(cars));
+    } else {
+      cars = JSON.parse(localStorage.getItem('euroauto_cars') || '[]');
+    }
+  } else {
+    cars = JSON.parse(localStorage.getItem('euroauto_cars') || '[]');
+  }
+  renderCars();
+  renderStatusTabs();
+}
+
+function saveLocal() { localStorage.setItem('euroauto_cars', JSON.stringify(cars)); }
+
+// ── NAVIGATION ──
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'stats') { statsFilter = null; renderStats(); }
+  if (id === 'workers') { workerFilter = null; renderWorkersScreen(); }
+  if (id === 'settings') { renderWorkersList(); var el=document.getElementById('apiUrlInput'); if(el) el.value=API_URL||''; }
+}
+
+// ── STATUS TABS ──
+function renderStatusTabs() {
+  var counts = {};
+  cars.forEach(function(c){ counts[c.status] = (counts[c.status]||0)+1; });
+  document.getElementById('statusTabs').innerHTML = STATUSES.map(function(s){
+    var cnt = s === 'Всі' ? cars.length : (counts[s]||0);
+    return '<div class="status-chip ' + (currentFilter===s?'active':'') + '" onclick="filterStatus(\''+s+'\')">' + s + ' ' + cnt + '</div>';
+  }).join('');
+}
+
+function filterStatus(s) { currentFilter = s; renderCars(); renderStatusTabs(); }
+
+// ── CARS LIST ──
+function renderCars() {
+  var filtered = currentFilter === 'Всі' ? cars : cars.filter(function(c){ return c.status === currentFilter; });
+  var el = document.getElementById('carsList');
+  if (!filtered.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🚗</div>Авто не знайдено</div>'; return; }
+  el.innerHTML = filtered.map(function(car){
+    var tasks = Array.isArray(car.tasks) ? car.tasks : [];
+    var done = tasks.filter(function(t){ return t.done; }).length;
+    var pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+    var photos = Array.isArray(car.photos) ? car.photos : [];
+    var days = car.daysInWork || 0;
+    var daysColor = days > 14 ? 'var(--red)' : days > 7 ? 'var(--orange)' : 'var(--text-muted)';
+    var photoHtml = photos.length ? '<img src="'+photos[0]+'" loading="lazy">' : '🚗';
+    var taskDots = tasks.map(function(t){ return '<div class="task-dot '+(t.done?'done':'')+'"></div>'; }).join('');
+    var progressBar = tasks.length ? '<div class="tasks-mini">'+taskDots+'</div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>' : '';
+    return '<div class="car-card" onclick="openDetail(\''+car.id+'\')"><div class="car-photo">'+photoHtml+'</div><div class="car-body"><div class="car-title">'+(car.make||'')+' '+(car.model||'')+' '+(car.year||'')+'</div><div class="car-meta">'+(car.plate||'—')+(car.responsible?' · '+car.responsible:'')+(car.price?' · $'+Number(car.price).toLocaleString():'')+'</div><div class="car-status-row"><span class="status-badge '+(STATUS_CLASS[car.status]||'')+'">'+(car.status||'')+'</span><span class="days-badge" style="color:'+daysColor+'">📅 '+days+' дн.</span></div>'+progressBar+'</div></div>';
+  }).join('');
+}
+
+// ── DETAIL ──
+function openDetail(id) {
+  var car = cars.find(function(c){ return c.id == id; });
+  if (!car) return;
+  currentCarId = id;
+  var photos = Array.isArray(car.photos) ? car.photos : [];
+  var tasks = Array.isArray(car.tasks) ? car.tasks : [];
+  var done = tasks.filter(function(t){ return t.done; }).length;
+  var pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+
+  document.getElementById('detailTitle').textContent = (car.make||'') + ' ' + (car.model||'');
+  var ph = document.getElementById('detailPhotos');
+  ph.innerHTML = photos.length ? photos.map(function(p){ return '<div class="detail-photo"><img src="'+p+'"></div>'; }).join('') : '<div style="padding:16px;color:var(--text-muted);font-size:13px">Фото немає</div>';
+
+  var taskHtml = tasks.length ? '<div class="detail-section"><div class="detail-section-title">Задачі '+done+'/'+tasks.length+' ('+pct+'%)</div><div class="progress-bar" style="margin-bottom:12px"><div class="progress-fill" style="width:'+pct+'%"></div></div>'+tasks.map(function(t,i){ return '<div class="detail-task"><button class="detail-task-check '+(t.done?'done':'')+'" onclick="toggleTaskDetail(\''+car.id+'\','+i+')">'+(t.done?'✓':'')+'</button><div class="detail-task-info"><div class="detail-task-name" style="'+(t.done?'text-decoration:line-through;opacity:.5':'')+'">'+(t.text||'')+'</div>'+(t.who?'<div class="detail-task-who">'+t.who+(t.done?' · ✅ виконано':'')+'</div>':(t.done?'<div class="detail-task-who">✅ виконано</div>':''))+'</div></div>'; }).join('')+'</div>' : '';
+  var commentHtml = car.comment ? '<div class="detail-section"><div class="detail-section-title">Коментар</div><div class="comment-box">'+car.comment+'</div></div>' : '';
+
+  document.getElementById('detailBody').innerHTML = '<div class="detail-section"><div class="detail-section-title">Інформація</div><div class="detail-row"><span class="detail-row-label">Статус</span><span class="status-badge '+(STATUS_CLASS[car.status]||'')+'">'+(car.status||'')+'</span></div><div class="detail-row"><span class="detail-row-label">Марка/Модель</span><span class="detail-row-value">'+(car.make||'—')+' '+(car.model||'')+'</span></div><div class="detail-row"><span class="detail-row-label">Рік</span><span class="detail-row-value">'+(car.year||'—')+'</span></div><div class="detail-row"><span class="detail-row-label">Держномер</span><span class="detail-row-value">'+(car.plate||'—')+'</span></div><div class="detail-row"><span class="detail-row-label">VIN</span><span class="detail-row-value" style="font-size:12px">'+(car.vin||'—')+'</span></div><div class="detail-row"><span class="detail-row-label">Ціна купівлі</span><span class="detail-row-value">'+(car.price?'$'+Number(car.price).toLocaleString():'—')+'</span></div><div class="detail-row"><span class="detail-row-label">Відповідальний</span><span class="detail-row-value">'+(car.responsible||'—')+'</span></div><div class="detail-row"><span class="detail-row-label">Днів в роботі</span><span class="detail-row-value">'+(car.daysInWork||0)+' дн.</span></div></div>'+taskHtml+commentHtml;
+
+  document.getElementById('detailView').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetail() {
+  document.getElementById('detailView').style.display = 'none';
+  document.body.style.overflow = '';
+  currentCarId = null;
+}
+
+async function toggleTaskDetail(carId, idx) {
+  var car = cars.find(function(c){ return c.id == carId; });
+  if (!car || !car.tasks[idx]) return;
+  car.tasks[idx].done = !car.tasks[idx].done;
+  saveLocal();
+  openDetail(carId);
+  renderCars();
+  if (API_URL) await apiCall({ action:'updateCar', id:carId, tasks:JSON.stringify(car.tasks) });
+}
+
+function editCurrentCar() { closeDetail(); openEditModal(currentCarId); }
+
+// ── MAKE / MODEL / YEAR SELECTS ──
+function populateMakeSelect(selectedMake) {
+  var sel = document.getElementById('fMake');
+  var makes = Object.keys(CAR_MAKES).sort();
+  sel.innerHTML = '<option value="">— Оберіть марку —</option>' +
+    makes.map(function(m){ return '<option value="'+m+'">'+m+'</option>'; }).join('') +
+    '<option value="__custom">Інша марка...</option>';
+  var customEl = document.getElementById('fMakeCustom');
+  if (selectedMake && makes.indexOf(selectedMake) === -1) {
+    sel.value = '__custom';
+    customEl.style.display = 'block';
+    customEl.value = selectedMake;
+  } else {
+    sel.value = selectedMake || '';
+    customEl.style.display = 'none';
+    customEl.value = '';
+  }
+}
+
+function populateModelSelect(make, selectedModel) {
+  var sel = document.getElementById('fModel');
+  var models = CAR_MAKES[make] || [];
+  sel.innerHTML = '<option value="">— Оберіть модель —</option>' +
+    models.map(function(m){ return '<option value="'+m+'">'+m+'</option>'; }).join('') +
+    '<option value="__custom">Інша модель...</option>';
+  var customEl = document.getElementById('fModelCustom');
+  if (selectedModel && models.indexOf(selectedModel) === -1) {
+    sel.value = '__custom';
+    customEl.style.display = 'block';
+    customEl.value = selectedModel;
+  } else {
+    sel.value = selectedModel || '';
+    customEl.style.display = 'none';
+    customEl.value = '';
+  }
+}
+
+function populateYearSelect(selectedYear) {
+  var sel = document.getElementById('fYear');
+  var current = new Date().getFullYear() + 1;
+  var opts = ['<option value="">— Оберіть рік —</option>'];
+  for (var y = current; y >= 1975; y--) opts.push('<option value="'+y+'">'+y+'</option>');
+  sel.innerHTML = opts.join('');
+  sel.value = selectedYear || '';
+}
+
+function onMakeChange() {
+  var make = document.getElementById('fMake').value;
+  var customEl = document.getElementById('fMakeCustom');
+  customEl.style.display = make === '__custom' ? 'block' : 'none';
+  populateModelSelect(make, '');
+}
+
+function onModelChange() {
+  var model = document.getElementById('fModel').value;
+  document.getElementById('fModelCustom').style.display = model === '__custom' ? 'block' : 'none';
+}
+
+function getMakeValue() {
+  var v = document.getElementById('fMake').value;
+  return v === '__custom' ? document.getElementById('fMakeCustom').value.trim() : v;
+}
+
+function getModelValue() {
+  var v = document.getElementById('fModel').value;
+  return v === '__custom' ? document.getElementById('fModelCustom').value.trim() : v;
+}
+
+// ── MODAL ──
+function openAddModal() {
+  editId = null; currentPhotos = []; currentTasks = [];
+  document.getElementById('modalTitle').textContent = 'Нове авто';
+  populateMakeSelect('');
+  populateModelSelect('', '');
+  populateYearSelect('');
+  document.getElementById('fPrice').value = '';
+  document.getElementById('fPlate').value = '';
+  document.getElementById('fVin').value = '';
+  document.getElementById('fStatus').value = 'Щойно куплено';
+  document.getElementById('fResponsible').value = '';
+  document.getElementById('fComment').value = '';
+  document.getElementById('btnDelete').style.display = 'none';
+  renderPhotoGrid(); renderTaskList(); updateWorkerSelects();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function openEditModal(id) {
+  var car = cars.find(function(c){ return c.id == id; });
+  if (!car) return;
+  editId = id;
+  currentPhotos = Array.isArray(car.photos) ? car.photos.slice() : [];
+  currentTasks = Array.isArray(car.tasks) ? JSON.parse(JSON.stringify(car.tasks)) : [];
+  document.getElementById('modalTitle').textContent = 'Редагувати авто';
+  populateMakeSelect(car.make||'');
+  populateModelSelect(car.make||'', car.model||'');
+  populateYearSelect(car.year||'');
+  document.getElementById('fPrice').value = car.price||'';
+  document.getElementById('fPlate').value = car.plate||'';
+  document.getElementById('fVin').value = car.vin||'';
+  document.getElementById('fStatus').value = car.status||'Щойно куплено';
+  document.getElementById('fResponsible').value = car.responsible||'';
+  document.getElementById('fComment').value = car.comment||'';
+  document.getElementById('btnDelete').style.display = 'block';
+  renderPhotoGrid(); renderTaskList(); updateWorkerSelects();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModalBg(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+// ── PHOTOS ──
+function handlePhotos(files) {
+  Array.from(files).forEach(function(file){
+    var reader = new FileReader();
+    reader.onload = function(e){ currentPhotos.push(e.target.result); renderPhotoGrid(); };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('photoInput').value = '';
+}
+
+function renderPhotoGrid() {
+  document.getElementById('photoGrid').innerHTML =
+    currentPhotos.map(function(p,i){ return '<div class="photo-thumb" onclick="removePhoto('+i+')"><img src="'+p+'"><div style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:12px">✕</div></div>'; }).join('') +
+    '<div class="photo-add" onclick="document.getElementById(\'photoInput\').click()">+</div>';
+}
+
+function removePhoto(i) { currentPhotos.splice(i,1); renderPhotoGrid(); }
+
+// ── TASKS ──
+function addTask() {
+  var text = document.getElementById('newTaskText').value.trim();
+  if (!text) return;
+  var who = document.getElementById('newTaskWho').value;
+  currentTasks.push({ text:text, who:who, done:false });
+  document.getElementById('newTaskText').value = '';
+  renderTaskList();
+}
+
+function renderTaskList() {
+  document.getElementById('taskList').innerHTML = currentTasks.map(function(t,i){
+    return '<div class="task-item"><button class="task-check '+(t.done?'done':'')+'" onclick="toggleTask('+i+')">'+(t.done?'✓':'')+'</button><div style="flex:1"><div class="task-text" style="'+(t.done?'text-decoration:line-through;opacity:.5':'')+'">'+(t.text||'')+'</div>'+(t.who?'<div class="task-who">'+t.who+(t.done?' · ✅ виконано':'')+'</div>':(t.done?'<div class="task-who">✅ виконано</div>':''))+'</div><button class="task-del" onclick="removeTask('+i+')">✕</button></div>';
+  }).join('');
+}
+
+function toggleTask(i) { currentTasks[i].done = !currentTasks[i].done; renderTaskList(); }
+function removeTask(i) { currentTasks.splice(i,1); renderTaskList(); }
+
+// ── SAVE/DELETE ──
+async function saveCar() {
+  var make = getMakeValue();
+  if (!make) { showToast('Вкажи марку авто'); return; }
+  var carData = {
+    make: make,
+    model: getModelValue(),
+    year: document.getElementById('fYear').value,
+    price: document.getElementById('fPrice').value,
+    plate: document.getElementById('fPlate').value,
+    vin: document.getElementById('fVin').value,
+    status: document.getElementById('fStatus').value,
+    responsible: document.getElementById('fResponsible').value,
+    comment: document.getElementById('fComment').value,
+    tasks: currentTasks,
+    photos: currentPhotos
+  };
+  if (editId) {
+    var idx = cars.findIndex(function(c){ return c.id == editId; });
+    if(idx>=0) cars[idx] = Object.assign({}, cars[idx], carData);
+    saveLocal();
+    if (API_URL) await apiCall(Object.assign({action:'updateCar',id:editId}, carData, {tasks:JSON.stringify(carData.tasks),photos:JSON.stringify(carData.photos)}));
+    showToast('✅ Авто оновлено');
+  } else {
+    var newCar = Object.assign({}, carData, {id:Date.now().toString(), created:new Date().toISOString(), daysInWork:0});
+    cars.unshift(newCar);
+    saveLocal();
+    if (API_URL) await apiCall(Object.assign({action:'addCar'}, carData, {tasks:JSON.stringify(carData.tasks),photos:JSON.stringify(carData.photos)}));
+    showToast('✅ Авто додано');
+  }
+  closeModal(); renderCars(); renderStatusTabs();
+}
+
+async function deleteCar() {
+  if (!editId || !confirm('Видалити авто?')) return;
+  cars = cars.filter(function(c){ return c.id != editId; });
+  saveLocal();
+  if (API_URL) await apiCall({action:'deleteCar',id:editId});
+  closeModal(); renderCars(); renderStatusTabs();
+  showToast('🗑 Авто видалено');
+}
+
+// ── WORKERS ──
+function saveWorkers() {
+  localStorage.setItem('euroauto_workers', JSON.stringify(workers));
+  updateWorkerSelects();
+}
+
+function renderWorkersList() {
+  var el = document.getElementById('workersList');
+  if(!el) return;
+  el.innerHTML = workers.map(function(w,i){
+    return '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center"><input class="form-input" value="'+w+'" oninput="workers['+i+']=this.value;saveWorkers()" style="flex:1;padding:10px 12px"><button onclick="removeWorker('+i+')" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;padding:0 4px">✕</button></div>';
+  }).join('') + '<button onclick="addWorker()" style="width:100%;background:var(--surface2);border:1.5px dashed var(--surface3);border-radius:var(--radius-sm);padding:10px;color:var(--accent);font-size:14px;cursor:pointer;margin-top:4px">+ Додати працівника</button>';
+}
+
+function addWorker() { workers.push('Новий працівник'); saveWorkers(); renderWorkersList(); }
+function removeWorker(i) { workers.splice(i,1); saveWorkers(); renderWorkersList(); }
+
+function updateWorkerSelects() {
+  var opts = '<option value="">— Обрати —</option>' + workers.map(function(w){ return '<option>'+w+'</option>'; }).join('');
+  ['fResponsible','newTaskWho'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){ var val=el.value; el.innerHTML=opts; el.value=val; }
+  });
+}
+
+// ── VIN SCAN ──
+function scanVin() { document.getElementById('vinPhoto').click(); }
+function processVinPhoto(input) {
+  if(!input.files||!input.files[0]) return;
+  var vin = prompt('Сфотографовано VIN. Введіть номер з фото:');
+  if(vin) document.getElementById('fVin').value = vin.trim().toUpperCase();
+  input.value='';
+}
+
+// ── STATS ──
+function renderStats() {
+  var total = cars.length;
+  var ready = cars.filter(function(c){ return c.status==='Готовий до продажу'; }).length;
+  var sold = cars.filter(function(c){ return c.status==='Продано'; }).length;
+  var avgDays = total ? Math.round(cars.reduce(function(s,c){ return s+(c.daysInWork||0); },0)/total) : 0;
+
+  document.getElementById('statsGrid').innerHTML =
+    '<div class="stat-card"><div class="stat-val">'+total+'</div><div class="stat-label">Всього авто</div></div>' +
+    '<div class="stat-card"><div class="stat-val">'+ready+'</div><div class="stat-label">Готові до продажу</div></div>' +
+    '<div class="stat-card"><div class="stat-val">'+sold+'</div><div class="stat-label">Продано</div></div>' +
+    '<div class="stat-card"><div class="stat-val">'+avgDays+'</div><div class="stat-label">Середній час (дн.)</div></div>';
+
+  var counts = {};
+  cars.forEach(function(c){ counts[c.status]=(counts[c.status]||0)+1; });
+  document.getElementById('statusBreakdown').innerHTML = Object.keys(counts).map(function(s){
+    var n = counts[s];
+    var isActive = statsFilter===s;
+    return '<div onclick="filterStatsCars(\''+s+'\')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border:1.5px solid '+(isActive?'var(--accent)':'transparent')+'"><span class="status-badge '+(STATUS_CLASS[s]||'')+'">'+(s||'')+'</span><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px;font-weight:700;color:var(--accent)">'+n+'</span><span style="color:var(--text-muted);">'+(isActive?'▲':'▼')+'</span></div></div>';
+  }).join('');
+
+  renderStatsCars();
+}
+
+function filterStatsCars(status) {
+  statsFilter = statsFilter===status ? null : status;
+  renderStats();
+}
+
+function compactCarCard(car) {
+  var photos = Array.isArray(car.photos)?car.photos:[];
+  var tasks = Array.isArray(car.tasks)?car.tasks:[];
+  var done = tasks.filter(function(t){return t.done;}).length;
+  return '<div class="car-card" onclick="openDetail(\''+car.id+'\')" style="margin-bottom:8px"><div style="display:flex;gap:12px;padding:12px"><div style="width:70px;height:70px;border-radius:8px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px">'+(photos.length?'<img src="'+photos[0]+'" style="width:100%;height:100%;object-fit:cover">':'🚗')+'</div><div style="flex:1"><div style="font-size:15px;font-weight:700">'+(car.make||'')+' '+(car.model||'')+' '+(car.year||'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">'+(car.plate||'—')+(car.responsible?' · '+car.responsible:'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">Задачі: '+done+'/'+tasks.length+' · '+(car.daysInWork||0)+' дн.</div></div></div></div>';
+}
+
+function renderStatsCars() {
+  var el = document.getElementById('statsCarsList');
+  if(!el) return;
+  if (!statsFilter) { el.innerHTML=''; return; }
+  var filtered = cars.filter(function(c){ return c.status===statsFilter; });
+  if (!filtered.length) { el.innerHTML='<div class="empty">Авто не знайдено</div>'; return; }
+  el.innerHTML = '<div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;font-weight:600">'+statsFilter+' — '+filtered.length+' авто</div>' +
+    filtered.map(compactCarCard).join('');
+}
+
+// ── WORKERS SCREEN ──
+function renderWorkersScreen() {
+  var body = document.getElementById('workersScreenBody');
+  var titleEl = document.getElementById('workersScreenTitle');
+  if (!body || !titleEl) return;
+  var NONE = '— Без відповідального';
+  if (!workerFilter) {
+    titleEl.innerHTML = 'Праців<span>ники</span>';
+    var counts = {};
+    cars.forEach(function(c){ var r = c.responsible || NONE; counts[r] = (counts[r]||0)+1; });
+    var list = workers.slice();
+    if (counts[NONE]) list.push(NONE);
+    if (!list.length) { body.innerHTML = '<div class="empty"><div class="empty-icon">👥</div>Немає працівників</div>'; return; }
+    body.innerHTML = list.map(function(w){
+      var n = counts[w] || 0;
+      var safeW = w.replace(/'/g, "\\'");
+      return '<div onclick="openWorkerCars(\''+safeW+'\')" style="background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer"><span style="font-size:15px;font-weight:600">👤 '+w+'</span><span style="font-size:16px;font-weight:700;color:var(--accent)">'+n+' авто</span></div>';
+    }).join('');
+  } else {
+    titleEl.textContent = workerFilter;
+    var filtered = cars.filter(function(c){ return (c.responsible || NONE) === workerFilter; });
+    var backBtn = '<button onclick="backToWorkersList()" style="background:var(--surface2);border:none;border-radius:var(--radius-sm);padding:8px 14px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px">← Всі працівники</button>';
+    body.innerHTML = backBtn + (filtered.length ? filtered.map(compactCarCard).join('') : '<div class="empty"><div class="empty-icon">🚗</div>Немає авто</div>');
+  }
+}
+
+function openWorkerCars(w) { workerFilter = w; renderWorkersScreen(); }
+function backToWorkersList() { workerFilter = null; renderWorkersScreen(); }
+
+// ── SETTINGS ──
+function saveApiUrl() {
+  var url = document.getElementById('apiUrlInput').value.trim();
+  if(url){ API_URL=url; localStorage.setItem('euroauto_api',url); loadCars(); showToast('✅ Посилання збережено'); }
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+// ── INIT ──
+function init() {
+  renderStatusTabs();
+  loadCars();
+  updateWorkerSelects();
+}
+init();
+</script>
+</body>
+</html>
