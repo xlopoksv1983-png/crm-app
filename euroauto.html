@@ -149,7 +149,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <div class="screen active" id="screen-cars">
   <div class="header">
     <h1>Євро<span>Авто</span></h1>
-    <button class="btn-accent" onclick="openAddModal()">+ Авто</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="openTrash()" style="position:relative;background:var(--surface2);border:none;border-radius:var(--radius-sm);width:38px;height:38px;color:var(--text-dim);font-size:16px;cursor:pointer">🗑<span id="trashBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px"></span></button>
+      <button class="btn-accent" onclick="openAddModal()">+ Авто</button>
+    </div>
   </div>
   <div class="status-scroll" id="statusTabs"></div>
   <div id="carsList"></div>
@@ -176,6 +179,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
   <div class="detail-photos" id="detailPhotos"></div>
   <div class="detail-body" id="detailBody"></div>
+</div>
+
+<!-- TRASH VIEW -->
+<div class="detail-view" id="trashView">
+  <div class="detail-header">
+    <button class="detail-back" onclick="closeTrash()">← Назад</button>
+    <div class="detail-title">Кошик</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="detail-body" id="trashBody"></div>
 </div>
 
 <!-- NAV -->
@@ -325,6 +338,16 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <div class="toast" id="toast"></div>
 
 <script>
+// ── DEBUG: показувати будь-які помилки на екрані (тимчасово, для діагностики) ──
+window.onerror = function(msg, url, line, col, error) {
+  alert('⚠️ Помилка JS: ' + msg + '\nРядок: ' + line);
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+  var reason = e && e.reason ? (e.reason.message || e.reason) : 'невідомо';
+  alert('⚠️ Помилка (async): ' + reason);
+});
+
 // ── CONFIG ──
 let API_URL = localStorage.getItem('euroauto_api') || '';
 let workers = JSON.parse(localStorage.getItem('euroauto_workers') || '["Керівник","Майстер 1","Майстер 2","Майстер 3","Майстер 4"]');
@@ -417,20 +440,33 @@ function showScreen(id, btn) {
 }
 
 // ── STATUS TABS ──
+function activeCars() { return cars.filter(function(c){ return !c.trashed; }); }
+
 function renderStatusTabs() {
+  var list = activeCars();
   var counts = {};
-  cars.forEach(function(c){ counts[c.status] = (counts[c.status]||0)+1; });
+  list.forEach(function(c){ counts[c.status] = (counts[c.status]||0)+1; });
   document.getElementById('statusTabs').innerHTML = STATUSES.map(function(s){
-    var cnt = s === 'Всі' ? cars.length : (counts[s]||0);
+    var cnt = s === 'Всі' ? list.length : (counts[s]||0);
     return '<div class="status-chip ' + (currentFilter===s?'active':'') + '" onclick="filterStatus(\''+s+'\')">' + s + ' ' + cnt + '</div>';
   }).join('');
+  renderTrashBadge();
+}
+
+function renderTrashBadge() {
+  var badge = document.getElementById('trashBadge');
+  if (!badge) return;
+  var n = cars.filter(function(c){ return c.trashed; }).length;
+  badge.style.display = n ? 'block' : 'none';
+  badge.textContent = n;
 }
 
 function filterStatus(s) { currentFilter = s; renderCars(); renderStatusTabs(); }
 
 // ── CARS LIST ──
 function renderCars() {
-  var filtered = currentFilter === 'Всі' ? cars : cars.filter(function(c){ return c.status === currentFilter; });
+  var base = activeCars();
+  var filtered = currentFilter === 'Всі' ? base : base.filter(function(c){ return c.status === currentFilter; });
   var el = document.getElementById('carsList');
   if (!filtered.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🚗</div>Авто не знайдено</div>'; return; }
   el.innerHTML = filtered.map(function(car){
@@ -486,7 +522,7 @@ async function toggleTaskDetail(carId, idx) {
   if (API_URL) await apiCall({ action:'updateCar', id:carId, tasks:JSON.stringify(car.tasks) });
 }
 
-function editCurrentCar() { closeDetail(); openEditModal(currentCarId); }
+function editCurrentCar() { var id = currentCarId; closeDetail(); openEditModal(id); }
 
 // ── MAKE / MODEL / YEAR SELECTS ──
 function populateMakeSelect(selectedMake) {
@@ -637,6 +673,7 @@ function removeTask(i) { currentTasks.splice(i,1); renderTaskList(); }
 
 // ── SAVE/DELETE ──
 async function saveCar() {
+ try {
   var make = getMakeValue();
   if (!make) { showToast('Вкажи марку авто'); return; }
   var carData = {
@@ -666,15 +703,59 @@ async function saveCar() {
     showToast('✅ Авто додано');
   }
   closeModal(); renderCars(); renderStatusTabs();
+ } catch(err) {
+  alert('⚠️ Помилка при збереженні: ' + (err && err.message ? err.message : err));
+ }
 }
 
 async function deleteCar() {
-  if (!editId || !confirm('Видалити авто?')) return;
-  cars = cars.filter(function(c){ return c.id != editId; });
+  if (!editId || !confirm('Перемістити авто в кошик?')) return;
+  var idx = cars.findIndex(function(c){ return c.id == editId; });
+  if (idx>=0) { cars[idx].trashed = true; cars[idx].trashedAt = new Date().toISOString(); }
   saveLocal();
-  if (API_URL) await apiCall({action:'deleteCar',id:editId});
+  if (API_URL) await apiCall({action:'updateCar', id:editId, trashed:'true', trashedAt: cars[idx] ? cars[idx].trashedAt : ''});
   closeModal(); renderCars(); renderStatusTabs();
-  showToast('🗑 Авто видалено');
+  showToast('🗑 Перенесено в кошик');
+}
+
+// ── TRASH ──
+function openTrash() {
+  document.getElementById('trashView').style.display = 'block';
+  renderTrash();
+}
+
+function closeTrash() {
+  document.getElementById('trashView').style.display = 'none';
+}
+
+function renderTrash() {
+  var el = document.getElementById('trashBody');
+  var trashed = cars.filter(function(c){ return c.trashed; });
+  if (!trashed.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🗑</div>Кошик порожній</div>'; renderTrashBadge(); return; }
+  el.innerHTML = trashed.map(function(car){
+    return '<div class="car-card" style="margin-bottom:8px"><div style="padding:14px"><div style="font-size:15px;font-weight:700">'+(car.make||'')+' '+(car.model||'')+' '+(car.year||'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">'+(car.plate||'—')+'</div><div style="display:flex;gap:8px;margin-top:12px"><button onclick="restoreCar(\''+car.id+'\')" style="flex:1;background:var(--surface2);border:none;border-radius:var(--radius-sm);padding:10px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer">↩ Відновити</button><button onclick="permanentlyDeleteCar(\''+car.id+'\')" style="flex:1;background:rgba(224,85,85,.15);border:1.5px solid var(--red);border-radius:var(--radius-sm);padding:10px;color:var(--red);font-size:13px;font-weight:600;cursor:pointer">Видалити назавжди</button></div></div></div>';
+  }).join('');
+  renderTrashBadge();
+}
+
+async function restoreCar(id) {
+  var idx = cars.findIndex(function(c){ return c.id == id; });
+  if (idx<0) return;
+  delete cars[idx].trashed;
+  delete cars[idx].trashedAt;
+  saveLocal();
+  if (API_URL) await apiCall({action:'updateCar', id:id, trashed:'false'});
+  renderTrash(); renderCars(); renderStatusTabs();
+  showToast('↩ Авто відновлено');
+}
+
+async function permanentlyDeleteCar(id) {
+  if (!confirm('Видалити авто назавжди? Це не можна скасувати.')) return;
+  cars = cars.filter(function(c){ return c.id != id; });
+  saveLocal();
+  if (API_URL) await apiCall({action:'deleteCar', id:id});
+  renderTrash(); renderCars(); renderStatusTabs();
+  showToast('🗑 Видалено назавжди');
 }
 
 // ── WORKERS ──
@@ -713,10 +794,11 @@ function processVinPhoto(input) {
 
 // ── STATS ──
 function renderStats() {
-  var total = cars.length;
-  var ready = cars.filter(function(c){ return c.status==='Готовий до продажу'; }).length;
-  var sold = cars.filter(function(c){ return c.status==='Продано'; }).length;
-  var avgDays = total ? Math.round(cars.reduce(function(s,c){ return s+(c.daysInWork||0); },0)/total) : 0;
+  var cars2 = activeCars();
+  var total = cars2.length;
+  var ready = cars2.filter(function(c){ return c.status==='Готовий до продажу'; }).length;
+  var sold = cars2.filter(function(c){ return c.status==='Продано'; }).length;
+  var avgDays = total ? Math.round(cars2.reduce(function(s,c){ return s+(c.daysInWork||0); },0)/total) : 0;
 
   document.getElementById('statsGrid').innerHTML =
     '<div class="stat-card"><div class="stat-val">'+total+'</div><div class="stat-label">Всього авто</div></div>' +
@@ -725,7 +807,7 @@ function renderStats() {
     '<div class="stat-card"><div class="stat-val">'+avgDays+'</div><div class="stat-label">Середній час (дн.)</div></div>';
 
   var counts = {};
-  cars.forEach(function(c){ counts[c.status]=(counts[c.status]||0)+1; });
+  cars2.forEach(function(c){ counts[c.status]=(counts[c.status]||0)+1; });
   document.getElementById('statusBreakdown').innerHTML = Object.keys(counts).map(function(s){
     var n = counts[s];
     var isActive = statsFilter===s;
@@ -751,7 +833,7 @@ function renderStatsCars() {
   var el = document.getElementById('statsCarsList');
   if(!el) return;
   if (!statsFilter) { el.innerHTML=''; return; }
-  var filtered = cars.filter(function(c){ return c.status===statsFilter; });
+  var filtered = activeCars().filter(function(c){ return c.status===statsFilter; });
   if (!filtered.length) { el.innerHTML='<div class="empty">Авто не знайдено</div>'; return; }
   el.innerHTML = '<div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;font-weight:600">'+statsFilter+' — '+filtered.length+' авто</div>' +
     filtered.map(compactCarCard).join('');
@@ -766,7 +848,7 @@ function renderWorkersScreen() {
   if (!workerFilter) {
     titleEl.innerHTML = 'Праців<span>ники</span>';
     var counts = {};
-    cars.forEach(function(c){ var r = c.responsible || NONE; counts[r] = (counts[r]||0)+1; });
+    activeCars().forEach(function(c){ var r = c.responsible || NONE; counts[r] = (counts[r]||0)+1; });
     var list = workers.slice();
     if (counts[NONE]) list.push(NONE);
     if (!list.length) { body.innerHTML = '<div class="empty"><div class="empty-icon">👥</div>Немає працівників</div>'; return; }
@@ -777,7 +859,7 @@ function renderWorkersScreen() {
     }).join('');
   } else {
     titleEl.textContent = workerFilter;
-    var filtered = cars.filter(function(c){ return (c.responsible || NONE) === workerFilter; });
+    var filtered = activeCars().filter(function(c){ return (c.responsible || NONE) === workerFilter; });
     var backBtn = '<button onclick="backToWorkersList()" style="background:var(--surface2);border:none;border-radius:var(--radius-sm);padding:8px 14px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px">← Всі працівники</button>';
     body.innerHTML = backBtn + (filtered.length ? filtered.map(compactCarCard).join('') : '<div class="empty"><div class="empty-icon">🚗</div>Немає авто</div>');
   }
