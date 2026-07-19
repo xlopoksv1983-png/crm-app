@@ -225,8 +225,13 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
   <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px">
     <div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">🔗 API Посилання</div>
-    <input class="form-input" id="apiUrlInput" placeholder="https://script.google.com/..." style="margin-bottom:8px">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input class="form-input" id="apiUrlInput" placeholder="https://script.google.com/..." style="flex:1">
+      <button onclick="copyApiUrl()" style="background:var(--surface2);border:none;border-radius:var(--radius-sm);padding:0 16px;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">📋 Копіювати</button>
+    </div>
     <button class="btn-accent" onclick="saveApiUrl()" style="width:100%;border:none;border-radius:var(--radius-sm);padding:12px;font-weight:700;cursor:pointer">Зберегти посилання</button>
+    <button onclick="shareWorkerLink()" style="width:100%;margin-top:8px;background:var(--surface2);border:1.5px solid var(--accent);border-radius:var(--radius-sm);padding:12px;color:var(--accent);font-weight:700;cursor:pointer">📤 Надіслати посилання працівнику</button>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Це посилання саме налаштує з'єднання — працівнику не треба нічого вставляти вручну</div>
     <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Посилання з Google Apps Script Web App</div>
   </div>
 </div>
@@ -406,7 +411,7 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 // ── CONFIG ──
-let API_URL = localStorage.getItem('euroauto_api') || '';
+let API_URL = localStorage.getItem('euroauto_api') || 'https://script.google.com/macros/s/AKfycbyXxybZq68ykCgbiCpC4BGeBKEdGWOLFWnC8y3pwGK9_3SgwzOQ1dAZKDeC-QUVDFkf/exec';
 let workers = JSON.parse(localStorage.getItem('euroauto_workers') || '["Керівник","Майстер 1","Майстер 2","Майстер 3","Майстер 4"]');
 let currentUser = localStorage.getItem('euroauto_user') || '';
 
@@ -1014,6 +1019,38 @@ function saveApiUrl() {
   if(url){ API_URL=url; localStorage.setItem('euroauto_api',url); loadCars(); showToast('✅ Посилання збережено'); }
 }
 
+function copyApiUrl() {
+  var val = document.getElementById('apiUrlInput').value.trim();
+  if (!val) { showToast('Спочатку встав посилання в поле'); return; }
+  copyText(val, '📋 Посилання скопійовано');
+}
+
+function copyText(text, successMsg) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){ showToast(successMsg); }).catch(function(){ fallbackCopy(text, successMsg); });
+  } else {
+    fallbackCopy(text, successMsg);
+  }
+}
+
+function fallbackCopy(text, successMsg) {
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); showToast(successMsg); } catch(e) { showToast('Не вдалось скопіювати'); }
+  document.body.removeChild(ta);
+}
+
+function shareWorkerLink() {
+  if (!API_URL) { showToast('Спочатку збережи API-посилання вище'); return; }
+  var link = location.origin + location.pathname + '?api=' + encodeURIComponent(API_URL);
+  if (navigator.share) {
+    navigator.share({ title: 'Євро Авто Ніжин', text: 'Відкрий цей додаток — все налаштується автоматично:', url: link }).catch(function(){});
+  } else {
+    copyText(link, '🔗 Посилання для працівників скопійовано');
+  }
+}
+
 // ── TOAST ──
 function showToast(msg) {
   var t = document.getElementById('toast');
@@ -1215,6 +1252,15 @@ document.addEventListener('visibilitychange', function(){
 
 // ── INIT ──
 function init() {
+  try {
+    var urlParams = new URLSearchParams(location.search);
+    var apiFromLink = urlParams.get('api');
+    if (apiFromLink) {
+      API_URL = apiFromLink;
+      localStorage.setItem('euroauto_api', API_URL);
+      if (window.history && history.replaceState) history.replaceState({}, '', location.pathname);
+    }
+  } catch(e) {}
   renderStatusTabs();
   loadCars();
   loadParts();
