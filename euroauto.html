@@ -149,6 +149,25 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 </head>
 <body>
 
+<!-- LOGIN -->
+<div id="loginOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:500;padding:24px;display:flex;flex-direction:column;justify-content:center">
+  <div style="max-width:340px;margin:0 auto;width:100%">
+    <div style="text-align:center;font-size:28px;font-weight:800;margin-bottom:6px">Євро<span style="color:var(--accent)">Авто</span></div>
+    <div style="text-align:center;color:var(--text-dim);font-size:14px;margin-bottom:28px">Введи ім'я та PIN-код для входу</div>
+    <div class="form-group">
+      <label class="form-label">Ім'я</label>
+      <input class="form-input" id="loginName" placeholder="Твоє ім'я" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">PIN-код</label>
+      <input class="form-input" id="loginPin" placeholder="••••" inputmode="numeric" maxlength="6" autocomplete="off">
+    </div>
+    <div id="loginError" style="color:var(--red);font-size:13px;margin-bottom:12px;display:none"></div>
+    <button class="btn-accent" id="btnLogin" onclick="doLogin()" style="width:100%;border:none;border-radius:var(--radius-sm);padding:14px;font-weight:700;cursor:pointer;font-size:15px">Увійти</button>
+    <div id="loginHint" style="text-align:center;color:var(--text-muted);font-size:12px;margin-top:16px"></div>
+  </div>
+</div>
+
 <!-- SCREENS -->
 <div class="screen active" id="screen-cars">
   <div class="header">
@@ -211,16 +230,15 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div class="header"><h1>Налаш<span>тування</span></h1></div>
 
   <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px">
-    <div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">🙋 Хто ви?</div>
-    <select class="form-input" id="userSelect" style="margin-bottom:8px"></select>
-    <button class="btn-accent" onclick="setCurrentUser()" style="width:100%;border:none;border-radius:var(--radius-sm);padding:12px;font-weight:700;cursor:pointer">Зберегти</button>
-    <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Кошик і видалення бачить лише «Керівник»</div>
+    <div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">🙋 Обліковий запис</div>
+    <div id="accountInfo" style="font-size:15px;font-weight:600;margin-bottom:12px"></div>
+    <button onclick="logout()" style="width:100%;background:var(--surface2);border:none;border-radius:var(--radius-sm);padding:12px;color:var(--red);font-weight:700;cursor:pointer">Вийти</button>
   </div>
 
   <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px">
-    <div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">👥 Імена працівників</div>
+    <div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">👥 Працівники</div>
     <div id="workersList"></div>
-    <div style="font-size:12px;color:var(--text-muted);margin-top:10px">Зміни збережуться автоматично</div>
+    <div id="addWorkerBtnWrap"></div>
   </div>
 
   <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px">
@@ -412,8 +430,8 @@ window.addEventListener('unhandledrejection', function(e) {
 
 // ── CONFIG ──
 let API_URL = localStorage.getItem('euroauto_api') || 'https://script.google.com/macros/s/AKfycbyXxybZq68ykCgbiCpC4BGeBKEdGWOLFWnC8y3pwGK9_3SgwzOQ1dAZKDeC-QUVDFkf/exec';
-let workers = JSON.parse(localStorage.getItem('euroauto_workers') || '["Керівник","Майстер 1","Майстер 2","Майстер 3","Майстер 4"]');
-let currentUser = localStorage.getItem('euroauto_user') || '';
+let workers = [];
+let session = JSON.parse(localStorage.getItem('euroauto_session') || 'null');
 
 const STATUSES = ['Всі','Щойно куплено','Діагностика','Хімчистка','Кузовний ремонт','Фарбування','Механічний ремонт','Готовий до продажу','Продано'];
 const STATUS_CLASS = {'Щойно куплено':'s-new','Діагностика':'s-diag','Хімчистка':'s-chem','Кузовний ремонт':'s-body','Фарбування':'s-paint','Механічний ремонт':'s-mech','Готовий до продажу':'s-ready','Продано':'s-sold'};
@@ -516,7 +534,7 @@ function showScreen(id, btn) {
   if (id === 'stats') { statsFilter = null; renderStats(); }
   if (id === 'workers') { workerFilter = null; renderWorkersScreen(); }
   if (id === 'parts') { renderParts(); }
-  if (id === 'settings') { renderWorkersList(); var el=document.getElementById('apiUrlInput'); if(el) el.value=API_URL||''; renderUserSelect(); }
+  if (id === 'settings') { renderWorkersSettings(); renderAccountInfo(); var el=document.getElementById('apiUrlInput'); if(el) el.value=API_URL||''; }
 }
 
 // ── STATUS TABS ──
@@ -825,9 +843,9 @@ async function saveCar() {
 async function deleteCar() {
   if (!editId || !confirm('Перемістити авто в кошик?')) return;
   var idx = cars.findIndex(function(c){ return c.id == editId; });
-  if (idx>=0) { cars[idx].trashed = true; cars[idx].trashedAt = new Date().toISOString(); cars[idx].trashedBy = currentUser || 'Невідомо'; }
+  if (idx>=0) { cars[idx].trashed = true; cars[idx].trashedAt = new Date().toISOString(); cars[idx].trashedBy = (session && session.name) || 'Невідомо'; }
   saveLocal();
-  if (API_URL) await apiCall({action:'updateCar', id:editId, trashed:'true', trashedAt: cars[idx] ? cars[idx].trashedAt : '', trashedBy: currentUser || 'Невідомо'});
+  if (API_URL) await apiCall({action:'updateCar', id:editId, trashed:'true', trashedAt: cars[idx] ? cars[idx].trashedAt : '', trashedBy: (session && session.name) || 'Невідомо'});
   closeModal(); renderCars(); renderStatusTabs();
   showToast('🗑 Перенесено в кошик');
 }
@@ -913,22 +931,6 @@ async function permanentlyDeletePart(id) {
 }
 
 // ── WORKERS ──
-function saveWorkers() {
-  localStorage.setItem('euroauto_workers', JSON.stringify(workers));
-  updateWorkerSelects();
-}
-
-function renderWorkersList() {
-  var el = document.getElementById('workersList');
-  if(!el) return;
-  el.innerHTML = workers.map(function(w,i){
-    return '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center"><input class="form-input" value="'+w+'" oninput="workers['+i+']=this.value;saveWorkers()" style="flex:1;padding:10px 12px"><button onclick="removeWorker('+i+')" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;padding:0 4px">✕</button></div>';
-  }).join('') + '<button onclick="addWorker()" style="width:100%;background:var(--surface2);border:1.5px dashed var(--surface3);border-radius:var(--radius-sm);padding:10px;color:var(--accent);font-size:14px;cursor:pointer;margin-top:4px">+ Додати працівника</button>';
-}
-
-function addWorker() { workers.push('Новий працівник'); saveWorkers(); renderWorkersList(); }
-function removeWorker(i) { workers.splice(i,1); saveWorkers(); renderWorkersList(); }
-
 function updateWorkerSelects() {
   var opts = '<option value="">— Обрати —</option>' + workers.map(function(w){ return '<option>'+w+'</option>'; }).join('');
   ['fResponsible','newTaskWho'].forEach(function(id){
@@ -1068,28 +1070,146 @@ function showToast(msg) {
   setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
 
-// ── CURRENT USER / ROLE ──
-function isManager() { return currentUser === 'Керівник'; }
-
-function renderUserSelect() {
-  var sel = document.getElementById('userSelect');
-  if (!sel) return;
-  sel.innerHTML = workers.map(function(w){ return '<option value="'+w+'">'+w+'</option>'; }).join('');
-  sel.value = currentUser || workers[0] || '';
-}
-
-function setCurrentUser() {
-  var sel = document.getElementById('userSelect');
-  currentUser = sel.value;
-  localStorage.setItem('euroauto_user', currentUser);
-  updateManagerUI();
-  showToast('✅ Збережено: ' + currentUser);
-}
+// ── AUTH / SESSION ──
+function isManager() { return !!(session && session.isManager === true); }
 
 function updateManagerUI() {
   var btn = document.getElementById('trashBtn');
   if (btn) btn.style.display = isManager() ? 'flex' : 'none';
 }
+
+function showLogin(message) {
+  document.getElementById('loginOverlay').style.display = 'flex';
+  var errEl = document.getElementById('loginError');
+  if (message) { errEl.textContent = message; errEl.style.display = 'block'; }
+  else { errEl.style.display = 'none'; }
+}
+
+function hideLogin() {
+  document.getElementById('loginOverlay').style.display = 'none';
+}
+
+async function doLogin() {
+  var name = document.getElementById('loginName').value.trim();
+  var pin = document.getElementById('loginPin').value.trim();
+  if (!name || !pin) { showLogin('Вкажи ім\'я та PIN'); return; }
+  var btn = document.getElementById('btnLogin');
+  btn.disabled = true; btn.textContent = 'Входжу...';
+  try {
+    var res = await apiCall({ action: 'login', name: name, pin: pin });
+    if (res && res.success) {
+      session = { workerId: res.workerId, name: res.name, isManager: res.isManager };
+      localStorage.setItem('euroauto_session', JSON.stringify(session));
+      hideLogin();
+      afterLogin();
+    } else {
+      showLogin((res && res.error) || 'Не вдалось увійти. Перевір інтернет.');
+    }
+  } catch(e) {
+    showLogin('Помилка мережі, спробуй ще раз');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Увійти';
+  }
+}
+
+function logout() {
+  if (!confirm('Вийти з облікового запису?')) return;
+  session = null;
+  localStorage.removeItem('euroauto_session');
+  showLogin();
+}
+
+async function verifySessionInBackground() {
+  if (!session || !API_URL) return;
+  var res = await apiCall({ action: 'checkSession', workerId: session.workerId });
+  if (res && res.error === 'revoked') {
+    session = null;
+    localStorage.removeItem('euroauto_session');
+    showLogin('Доступ відкликано. Зверніться до керівника.');
+  } else if (res && res.success) {
+    session = { workerId: session.workerId, name: res.name, isManager: res.isManager };
+    localStorage.setItem('euroauto_session', JSON.stringify(session));
+    updateManagerUI();
+  }
+}
+
+// ── WORKERS (керує керівник) ──
+let workersFull = [];
+
+async function loadWorkers() {
+  workersFull = JSON.parse(localStorage.getItem('euroauto_workers_full') || '[]');
+  workers = workersFull.map(function(w){ return w.name; });
+  renderWorkersSettings();
+  updateWorkerSelects();
+  if (API_URL) {
+    var res = await apiCall({ action: 'listWorkers' });
+    if (res && res.workers) {
+      workersFull = res.workers;
+      workers = workersFull.map(function(w){ return w.name; });
+      localStorage.setItem('euroauto_workers_full', JSON.stringify(workersFull));
+      renderWorkersSettings();
+      updateWorkerSelects();
+    }
+  }
+}
+
+function renderWorkersSettings() {
+  var el = document.getElementById('workersList');
+  var addWrap = document.getElementById('addWorkerBtnWrap');
+  if (!el) return;
+  if (!workersFull.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Список порожній</div>';
+  } else {
+    el.innerHTML = workersFull.map(function(w){
+      var delBtn = isManager() ? '<button onclick="deleteWorkerConfirm(\''+w.id+'\',\''+w.name.replace(/'/g,"\\'")+'\')" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px 8px">✕</button>' : '';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px"><span style="font-size:15px;font-weight:600">'+w.name+'</span>'+delBtn+'</div>';
+    }).join('');
+  }
+  if (addWrap) {
+    addWrap.innerHTML = isManager()
+      ? '<button onclick="addWorkerPrompt()" style="width:100%;margin-top:4px;background:var(--surface2);border:1.5px dashed var(--accent);border-radius:var(--radius-sm);padding:12px;color:var(--accent);font-weight:600;cursor:pointer">+ Додати працівника</button>'
+      : '';
+  }
+}
+
+async function addWorkerPrompt() {
+  var name = prompt('Ім\'я нового працівника:');
+  if (!name || !name.trim()) return;
+  var res = await apiCall({ action: 'addWorker', name: name.trim(), requesterId: session.workerId });
+  if (res && res.success) {
+    alert('Готово! PIN-код для ' + name.trim() + ': ' + res.pin + '\n\nПередай цей код працівнику особисто — він знадобиться для входу.');
+    await loadWorkers();
+  } else {
+    showToast('⚠️ ' + ((res && res.error) || 'Не вдалось додати'));
+  }
+}
+
+async function deleteWorkerConfirm(id, name) {
+  if (!confirm('Видалити «' + name + '»? Ця людина втратить доступ до додатку.')) return;
+  var res = await apiCall({ action: 'removeWorker', id: id, requesterId: session.workerId });
+  if (res && res.success) {
+    showToast('✅ ' + name + ' видалено');
+    await loadWorkers();
+  } else {
+    showToast('⚠️ ' + ((res && res.error) || 'Не вдалось видалити'));
+  }
+}
+
+function renderAccountInfo() {
+  var el = document.getElementById('accountInfo');
+  if (el && session) el.textContent = session.name;
+}
+
+function afterLogin() {
+  updateManagerUI();
+  renderAccountInfo();
+  renderWorkersSettings();
+  loadCars();
+  loadParts();
+  loadWorkers();
+  startAutoRefresh();
+}
+
 
 // ── PARTS ──
 function saveLocalParts() {
@@ -1215,9 +1335,9 @@ async function savePart() {
 async function deletePart() {
   if (!editPartId || !confirm('Перемістити деталь в кошик?')) return;
   var idx = parts.findIndex(function(p){ return p.id === editPartId; });
-  if (idx>=0) { parts[idx].trashed = true; parts[idx].trashedAt = new Date().toISOString(); parts[idx].trashedBy = currentUser || 'Невідомо'; }
+  if (idx>=0) { parts[idx].trashed = true; parts[idx].trashedAt = new Date().toISOString(); parts[idx].trashedBy = (session && session.name) || 'Невідомо'; }
   saveLocalParts();
-  if (API_URL) await apiCall({action:'updatePart', id:editPartId, trashed:'true', trashedBy: currentUser || 'Невідомо'});
+  if (API_URL) await apiCall({action:'updatePart', id:editPartId, trashed:'true', trashedBy: (session && session.name) || 'Невідомо'});
   closePartModal(); renderParts();
   showToast('🗑 Перенесено в кошик');
 }
@@ -1234,6 +1354,8 @@ async function silentRefresh() {
   if (!API_URL) return;
   if (document.hidden) return;
   if (isEditingNow()) return;
+  await verifySessionInBackground();
+  if (!session) return;
   try {
     var carData = await apiCall({ action: 'getCars' });
     if (carData && carData.cars) {
@@ -1278,11 +1400,15 @@ function init() {
     }
   } catch(e) {}
   renderStatusTabs();
-  loadCars();
-  loadParts();
-  updateWorkerSelects();
-  updateManagerUI();
-  startAutoRefresh();
+
+  if (session && session.workerId && session.name) {
+    // Є збережений вхід — одразу показуємо додаток, а сесію перевіряємо у фоні
+    hideLogin();
+    afterLogin();
+    verifySessionInBackground();
+  } else {
+    showLogin();
+  }
 }
 init();
 </script>
