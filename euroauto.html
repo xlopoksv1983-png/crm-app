@@ -360,7 +360,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
   <div class="form-actions">
     <button class="btn-cancel" onclick="closeModal()">Скасувати</button>
-    <button class="btn-save" onclick="saveCar()">Зберегти</button>
+    <button class="btn-save" id="btnSaveCar" onclick="saveCar()">Зберегти</button>
   </div>
   <button class="btn-delete" id="btnDelete" style="display:none" onclick="deleteCar()">Видалити авто</button>
 </div>
@@ -391,7 +391,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
   <div class="form-actions">
     <button class="btn-cancel" onclick="closePartModal()">Скасувати</button>
-    <button class="btn-save" onclick="savePart()">Зберегти</button>
+    <button class="btn-save" id="btnSavePart" onclick="savePart()">Зберегти</button>
   </div>
   <button class="btn-delete" id="btnDeletePart" style="display:none" onclick="deletePart()">Видалити деталь</button>
 </div>
@@ -779,7 +779,13 @@ function toggleTask(i) { currentTasks[i].done = !currentTasks[i].done; renderTas
 function removeTask(i) { currentTasks.splice(i,1); renderTaskList(); }
 
 // ── SAVE/DELETE ──
+let isSavingCar = false;
 async function saveCar() {
+ if (isSavingCar) return;
+ isSavingCar = true;
+ var btn = document.getElementById('btnSaveCar');
+ var btnOrigText = btn ? btn.textContent : '';
+ if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Зберігаю...'; }
  try {
   var make = getMakeValue();
   if (!make) { showToast('Вкажи марку авто'); return; }
@@ -812,6 +818,9 @@ async function saveCar() {
   closeModal(); renderCars(); renderStatusTabs();
  } catch(err) {
   alert('⚠️ Помилка при збереженні: ' + (err && err.message ? err.message : err));
+ } finally {
+  isSavingCar = false;
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.textContent = btnOrigText || 'Зберегти'; }
  }
 }
 
@@ -1174,7 +1183,13 @@ function renderPartPhotoGrid() {
 
 function removePartPhoto(i) { currentPartPhotos.splice(i,1); renderPartPhotoGrid(); }
 
+let isSavingPart = false;
 async function savePart() {
+ if (isSavingPart) return;
+ isSavingPart = true;
+ var btn = document.getElementById('btnSavePart');
+ var btnOrigText = btn ? btn.textContent : '';
+ if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Зберігаю...'; }
  try {
   var name = document.getElementById('pName').value.trim();
   if (!name) { showToast('Вкажи назву деталі'); return; }
@@ -1195,6 +1210,9 @@ async function savePart() {
   closePartModal(); renderParts();
  } catch(err) {
   alert('⚠️ Помилка при збереженні деталі: ' + (err && err.message ? err.message : err));
+ } finally {
+  isSavingPart = false;
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.textContent = btnOrigText || 'Зберегти'; }
  }
 }
 
