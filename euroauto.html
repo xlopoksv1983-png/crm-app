@@ -469,8 +469,10 @@ const CAR_MAKES = {
 async function apiCall(params) {
   if (!API_URL) return null;
   try {
-    const url = API_URL + '?' + new URLSearchParams(params).toString();
-    const r = await fetch(url);
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      body: new URLSearchParams(params)
+    });
     return await r.json();
   } catch(e) { return null; }
 }
