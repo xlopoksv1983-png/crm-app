@@ -14,7 +14,7 @@
 <style>
 :root {
   --bg:#0D0D0D; --surface:#1A1A1A; --surface2:#242424; --surface3:#2E2E2E;
-  --text:#F0EDE6; --text-dim:#888; --text-muted:#555;
+  --text:#F0EDE6; --text-dim:#B8B8B8; --text-muted:#8C8C8C;
   --accent:#E8B84B; --btn:#E8B84B; --btn-text:#000;
   --red:#E05555; --green:#4CAF50; --orange:#E07B30; --blue:#4A90D9;
   --radius:14px; --radius-sm:8px;
@@ -24,8 +24,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* NAV */
 .nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid #2a2a2a;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 2px 6px;gap:2px;font-size:9px;color:var(--text-muted);cursor:pointer;border:none;background:none}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 2px 6px;gap:3px;font-size:10px;font-weight:700;color:var(--text-dim);cursor:pointer;border:none;background:none}
 .nav-btn.active{color:var(--accent)}
+.nav-btn svg{stroke-width:2.4}
 .nav-btn svg{width:22px;height:22px}
 
 .screen{display:none;padding:16px 16px 90px;min-height:100vh}
@@ -86,9 +87,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* TASKS IN MODAL */
 .task-list{margin-top:8px}
 .task-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--surface3)}
-.task-check{width:24px;height:24px;border-radius:6px;border:2px solid var(--surface3);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:14px}
+.task-check{width:26px;height:26px;border-radius:6px;border:2.5px solid #6a6a6a;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:15px}
 .task-check.done{background:var(--green);border-color:var(--green);color:#fff}
-.task-text{flex:1;font-size:14px}
+.task-text{flex:1;font-size:14.5px;font-weight:500}
 .task-who{font-size:11px;color:var(--text-muted)}
 .task-del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;padding:0 4px}
 .add-task-row{display:flex;gap:8px;margin-top:10px}
@@ -120,7 +121,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .detail-row-value{font-size:14px;font-weight:600;text-align:right}
 .detail-task{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--surface2)}
 .detail-task:last-child{border-bottom:none}
-.detail-task-check{width:26px;height:26px;border-radius:8px;border:2px solid var(--surface3);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:15px}
+.detail-task-check{width:28px;height:28px;border-radius:8px;border:2.5px solid #6a6a6a;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px}
 .detail-task-check.done{background:var(--green);border-color:var(--green);color:#fff}
 .detail-task-info{flex:1}
 .detail-task-name{font-size:14px;font-weight:500}
@@ -128,8 +129,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .comment-box{background:var(--surface2);border-radius:var(--radius-sm);padding:12px;font-size:14px;color:var(--text-dim);line-height:1.5;min-height:60px;white-space:pre-wrap}
 
 /* PROGRESS BAR */
-.progress-bar{height:6px;background:var(--surface3);border-radius:3px;margin-top:8px;overflow:hidden}
-.progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .3s}
+.progress-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.progress-bar{flex:1;height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;border:1px solid #3a3a3a}
+.progress-fill{height:100%;background:var(--green);border-radius:4px;transition:width .3s}
+.progress-pct{font-size:13px;font-weight:800;color:var(--green);min-width:38px;text-align:right}
 
 /* SPINNER */
 .spinner{text-align:center;padding:40px;color:var(--text-muted);font-size:14px}
@@ -576,7 +579,7 @@ function renderCars() {
     var daysColor = days > 14 ? 'var(--red)' : days > 7 ? 'var(--orange)' : 'var(--text-muted)';
     var photoHtml = photos.length ? '<img src="'+photos[0]+'" loading="lazy">' : '🚗';
     var taskDots = tasks.map(function(t){ return '<div class="task-dot '+(t.done?'done':'')+'"></div>'; }).join('');
-    var progressBar = tasks.length ? '<div class="tasks-mini">'+taskDots+'</div><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>' : '';
+    var progressBar = tasks.length ? '<div class="tasks-mini">'+taskDots+'</div><div class="progress-row"><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><div class="progress-pct">'+pct+'%</div></div>' : '';
     return '<div class="car-card" onclick="openDetail(\''+car.id+'\')"><div class="car-photo">'+photoHtml+'</div><div class="car-body"><div class="car-title">'+(car.make||'')+' '+(car.model||'')+' '+(car.year||'')+'</div><div class="car-meta">'+(car.plate||'—')+(car.responsible?' · '+car.responsible:'')+(car.price?' · $'+Number(car.price).toLocaleString():'')+'</div><div class="car-status-row"><span class="status-badge '+(STATUS_CLASS[car.status]||'')+'">'+(car.status||'')+'</span><span class="days-badge" style="color:'+daysColor+'">📅 '+days+' дн.</span></div>'+progressBar+'</div></div>';
   }).join('');
 }
