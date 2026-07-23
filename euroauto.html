@@ -55,6 +55,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .days-badge{font-size:11px;color:var(--text-muted)}
 .tasks-mini{display:flex;gap:4px;flex-wrap:wrap}
 .task-dot{width:10px;height:10px;border-radius:50%;background:var(--surface3)}
+.task-count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 8px;border-radius:20px;background:var(--surface2);border:2px solid var(--accent);font-size:13px;font-weight:800;color:var(--text)}
+.task-count-badge.done{border-color:var(--green);color:var(--green)}
 .task-dot.done{background:var(--green)}
 .task-dot.active{background:var(--accent)}
 
@@ -578,8 +580,8 @@ function renderCars() {
     var days = car.daysInWork || 0;
     var daysColor = days > 14 ? 'var(--red)' : days > 7 ? 'var(--orange)' : 'var(--text-muted)';
     var photoHtml = photos.length ? '<img src="'+photos[0]+'" loading="lazy">' : '🚗';
-    var taskDots = tasks.map(function(t){ return '<div class="task-dot '+(t.done?'done':'')+'"></div>'; }).join('');
-    var progressBar = tasks.length ? '<div class="tasks-mini">'+taskDots+'</div><div class="progress-row"><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><div class="progress-pct">'+pct+'%</div></div>' : '';
+    var taskBadge = '<div class="task-count-badge'+(done===tasks.length&&tasks.length?' done':'')+'">'+done+'/'+tasks.length+'</div>';
+    var progressBar = tasks.length ? '<div class="progress-row">'+taskBadge+'<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><div class="progress-pct">'+pct+'%</div></div>' : '';
     return '<div class="car-card" onclick="openDetail(\''+car.id+'\')"><div class="car-photo">'+photoHtml+'</div><div class="car-body"><div class="car-title">'+(car.make||'')+' '+(car.model||'')+' '+(car.year||'')+'</div><div class="car-meta">'+(car.plate||'—')+(car.responsible?' · '+car.responsible:'')+(car.price?' · $'+Number(car.price).toLocaleString():'')+'</div><div class="car-status-row"><span class="status-badge '+(STATUS_CLASS[car.status]||'')+'">'+(car.status||'')+'</span><span class="days-badge" style="color:'+daysColor+'">📅 '+days+' дн.</span></div>'+progressBar+'</div></div>';
   }).join('');
 }
@@ -986,8 +988,9 @@ function compactCarCard(car) {
   var tasks = Array.isArray(car.tasks)?car.tasks:[];
   var done = tasks.filter(function(t){return t.done;}).length;
   var pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
-  var pctHtml = tasks.length ? '<div class="progress-row" style="margin-top:6px"><div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><div class="progress-pct">'+pct+'%</div></div>' : '';
-  return '<div class="car-card" onclick="openDetail(\''+car.id+'\')" style="margin-bottom:8px"><div style="display:flex;gap:12px;padding:12px"><div style="width:70px;height:70px;border-radius:8px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px">'+(photos.length?'<img src="'+photos[0]+'" style="width:100%;height:100%;object-fit:cover">':'🚗')+'</div><div style="flex:1"><div style="font-size:15px;font-weight:700">'+(car.make||'')+' '+(car.model||'')+' '+(car.year||'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">'+(car.plate||'—')+(car.responsible?' · '+car.responsible:'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">Задачі: '+done+'/'+tasks.length+' · '+(car.daysInWork||0)+' дн.</div>'+pctHtml+'</div></div></div>';
+  var taskBadge = tasks.length ? '<div class="task-count-badge'+(done===tasks.length?' done':'')+'" style="height:30px;min-width:30px;font-size:12px">'+done+'/'+tasks.length+'</div>' : '';
+  var pctHtml = tasks.length ? '<div class="progress-row" style="margin-top:6px">'+taskBadge+'<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div><div class="progress-pct">'+pct+'%</div></div>' : '';
+  return '<div class="car-card" onclick="openDetail(\''+car.id+'\')" style="margin-bottom:8px"><div style="display:flex;gap:12px;padding:12px"><div style="width:70px;height:70px;border-radius:8px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px">'+(photos.length?'<img src="'+photos[0]+'" style="width:100%;height:100%;object-fit:cover">':'🚗')+'</div><div style="flex:1"><div style="font-size:15px;font-weight:700">'+(car.make||'')+' '+(car.model||'')+' '+(car.year||'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">'+(car.plate||'—')+(car.responsible?' · '+car.responsible:'')+'</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">'+(car.daysInWork||0)+' дн.</div>'+pctHtml+'</div></div></div>';
 }
 
 function renderStatsCars() {
