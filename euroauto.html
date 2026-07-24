@@ -510,7 +510,7 @@ async function loadCars() {
     const data = await apiCall({ action: 'getCars' });
     if (data && data.cars) {
       cars = data.cars;
-      localStorage.setItem('euroauto_cars', JSON.stringify(cars));
+      saveLocal();
       renderCars();
       renderStatusTabs();
     }
@@ -1250,7 +1250,7 @@ async function loadParts() {
     var data = await apiCall({ action: 'getParts' });
     if (data && data.parts) {
       parts = data.parts;
-      localStorage.setItem('euroauto_parts', JSON.stringify(parts));
+      saveLocalParts();
       renderParts();
     }
   }
@@ -1378,12 +1378,12 @@ async function silentRefresh() {
     var carData = await apiCall({ action: 'getCars' });
     if (carData && carData.cars) {
       cars = carData.cars;
-      localStorage.setItem('euroauto_cars', JSON.stringify(cars));
+      saveLocal();
     }
     var partData = await apiCall({ action: 'getParts' });
     if (partData && partData.parts) {
       parts = partData.parts;
-      localStorage.setItem('euroauto_parts', JSON.stringify(parts));
+      saveLocalParts();
     }
   } catch(e) { return; }
 
