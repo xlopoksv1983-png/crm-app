@@ -295,7 +295,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div class="photo-grid" id="photoGrid">
       <div class="photo-add" onclick="document.getElementById('photoInput').click()">+</div>
     </div>
-    <input type="file" id="photoInput" multiple accept="image/*" capture="environment" style="display:none" onchange="handlePhotos(this.files)">
+    <input type="file" id="photoInput" multiple accept="image/*" style="display:none" onchange="handlePhotos(this.files)">
   </div>
 
   <div class="form-row">
@@ -402,7 +402,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div class="photo-grid" id="partPhotoGrid">
       <div class="photo-add" onclick="document.getElementById('partPhotoInput').click()">+</div>
     </div>
-    <input type="file" id="partPhotoInput" multiple accept="image/*" capture="environment" style="display:none" onchange="handlePartPhotos(this.files)">
+    <input type="file" id="partPhotoInput" multiple accept="image/*" style="display:none" onchange="handlePartPhotos(this.files)">
   </div>
 
   <div class="form-group">
@@ -519,16 +519,10 @@ async function loadCars() {
 
 function saveLocal() {
   try {
-    localStorage.setItem('euroauto_cars', JSON.stringify(cars));
+    var lite = cars.map(function(c){ return Object.assign({}, c, {photos: []}); });
+    localStorage.setItem('euroauto_cars', JSON.stringify(lite));
   } catch(e) {
-    console.warn('localStorage full, trying without photos', e);
-    try {
-      var lite = cars.map(function(c){ return Object.assign({}, c, {photos: (c.photos||[]).slice(0,1)}); });
-      localStorage.setItem('euroauto_cars', JSON.stringify(lite));
-      showToast('⚠️ Памʼять переповнена — залишено лише 1 фото на авто локально');
-    } catch(e2) {
-      showToast('⚠️ Немає місця для локального збереження. Дані надіслано на сервер, якщо є API-посилання.');
-    }
+    console.warn('localStorage save failed even without photos', e);
   }
 }
 
@@ -1240,12 +1234,10 @@ function afterLogin() {
 // ── PARTS ──
 function saveLocalParts() {
   try {
-    localStorage.setItem('euroauto_parts', JSON.stringify(parts));
+    var lite = parts.map(function(p){ return Object.assign({}, p, {photos: []}); });
+    localStorage.setItem('euroauto_parts', JSON.stringify(lite));
   } catch(e) {
-    try {
-      var lite = parts.map(function(p){ return Object.assign({}, p, {photos:(p.photos||[]).slice(0,1)}); });
-      localStorage.setItem('euroauto_parts', JSON.stringify(lite));
-    } catch(e2) {}
+    console.warn('localStorage parts save failed', e);
   }
 }
 
